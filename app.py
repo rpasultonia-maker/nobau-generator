@@ -8,9 +8,14 @@ st.set_page_config(page_title="NOBAU Content Prompt Generator", page_icon="⚡",
 st.title("⚡ NOBAU Content Prompt Generator")
 st.caption("Otomatisasi pembuatan prompt detail Flow AI / Midjourney berdasarkan Scene & Wajah Model NOBAU")
 
-# Input API Key di Sidebar
+# Cek API Key dari Streamlit Secrets atau Sidebar
 st.sidebar.header("🔑 Pengaturan API")
-api_key = st.sidebar.text_input("Masukkan Gemini API Key:", type="password")
+
+if "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"]:
+    api_key = st.secrets["GEMINI_API_KEY"]
+    st.sidebar.success("✅ API Key Terhubung Otomatis!")
+else:
+    api_key = st.sidebar.text_input("Masukkan Gemini API Key:", type="password")
 
 if not api_key:
     st.warning("Silakan masukkan Gemini API Key di sidebar untuk mulai menggunakan web app ini.")
