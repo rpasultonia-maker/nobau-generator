@@ -44,10 +44,10 @@ with col2:
 st.markdown("---")
 
 # MENU PILIHAN FITUR (TABS)
-tab1, tab2 = st.tabs(["📸 1. MASTER PROMPT IMAGE (Fitur Awal)", "🎬 2. VIDEO CONTENT BRAIN V3 (Flow AI 10s)"])
+tab1, tab2 = st.tabs(["📸 1. MASTER PROMPT IMAGE", "🎬 2. VIDEO CONTENT BRAIN V3 (Flow AI 10s)"])
 
 # ==========================================
-# TAB 1: FITUR GENERATE PROMPT FOTO/IMAGE (LAMA - AMAN 100%)
+# TAB 1: MASTER PROMPT IMAGE (FOTO STATIS)
 # ==========================================
 with tab1:
     st.info("Fitur ini menghasilkan Master Prompt Foto/Selfie Statis untuk Midjourney / Flow AI Image.")
@@ -80,7 +80,7 @@ PHOTOGRAPHIC STYLE: Authentic Indonesian social-media selfie aesthetic, casual h
 IDENTITY PRIORITY: Image 2 = Identity & Face. Image 1 = Pose, Outfit, Scene, & Style.
 FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation.
 """
-    if st.button("🚀 Generate Master Prompt Image (Foto Statis)", type="primary", use_container_width=True):
+    if st.button("🚀 Generate Master Prompt Image", type="primary", use_container_width=True):
         if not scene_file or not face_file:
             st.error("Harap upload KEDUA foto terlebih dahulu!")
         else:
@@ -94,7 +94,7 @@ FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's
                     st.error(f"Terjadi kesalahan: {e}")
 
 # ==========================================
-# TAB 2: FITUR VIDEO CONTENT BRAIN V3 (BARU)
+# TAB 2: VIDEO CONTENT BRAIN V3 (FLOW AI 10S)
 # ==========================================
 with tab2:
     st.info("Fitur ini melakukan riset tren otomatis + meracik Script Video UGC 10 Detik & Prompt Video Flow AI V3.")
@@ -117,16 +117,16 @@ STRICT COMPLIANCE RULES (NOBAU MASTER PRODUCTION SYSTEM V3):
 OUTPUT FORMAT:
 
 SECTION 1: NOBAU CONTENT BRAIN (Bahasa Indonesia)
-- **Brief & Angle Konten:** (Analisis situasi foto + tren/insight riset masalah bau harian).
-- **Target Karakter:** (Pria/Wanita + konteks peran).
-- **Breakdown Timeline 10s:** (0-3s Hook, 3-6s Action, 6-8s Payoff, 8-10s Soft CTA).
-- **Dialogue Script (EXACT):** (Dialog bahasa Indonesia).
-- **Caption & Hashtag Social Media:**
+- Brief & Angle Konten: (Analisis situasi foto + tren/insight riset masalah bau harian).
+- Target Karakter: (Pria/Wanita + konteks peran).
+- Breakdown Timeline 10s: (0-3s Hook, 3-6s Action, 6-8s Payoff, 8-10s Soft CTA).
+- Dialogue Script (EXACT): (Dialog bahasa Indonesia).
+- Caption & Hashtag Social Media:
 
 SECTION 2: FINAL FLOW AI PROMPT (English - Locked Structure)
 Structure: IDENTITY -> PRODUCT -> STORY -> DIALOGUE -> STYLE -> CONTINUITY
 
-```text
+Format Output Flow AI Prompt:
 A continuous 10-second vertical 9:16 smartphone UGC video of a young Indonesian creator recorded in [describe environment from Image 1].
 
 IDENTITY: Preserve exact facial structure, hair, and skin tone from Image 2 reference. Wearing [describe outfit from Image 1].
@@ -145,3 +145,19 @@ DIALOGUE (Spoken natively in conversational Indonesian, EXACTLY):
 CAMERA & STYLE: Authentic Indonesian TikTok creator aesthetic, natural handheld movement, everyday Indonesian lighting, casual selfie perspective.
 
 CONTINUITY: One continuous generation, no camera cuts, no face morphing, no product redesign, no trigger spray mechanism, no floating limbs, no text or graphics.
+"""
+    if st.button("🚀 Run Content Brain V3 & Generate Flow AI Video Prompt", type="primary", use_container_width=True):
+        if not scene_file or not face_file:
+            st.error("Harap upload KEDUA foto terlebih dahulu!")
+        else:
+            with st.spinner("Content Brain sedang meriset tren & menyusun Master V3 Video Prompt..."):
+                try:
+                    model = genai.GenerativeModel(
+                        model_name='gemini-3.8-flash',
+                        tools=[{'google_search': {}}]
+                    )
+                    response = model.generate_content([LOCKED_VIDEO_MASTER, scene_img, face_img])
+                    st.success("Master Production System V3 Berhasil Dijalankan!")
+                    st.markdown(response.text)
+                except Exception as e:
+                    st.error(f"Terjadi kesalahan: {e}")
