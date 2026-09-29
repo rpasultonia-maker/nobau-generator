@@ -93,7 +93,7 @@ FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's
                     st.error(f"Terjadi kesalahan: {e}")
 
 # ==========================================
-# TAB 2: VIDEO CONTENT BRAIN V3 (2 UPLOAD: FINAL FOTO + PRODUK BOTOL)
+# TAB 2: VIDEO CONTENT BRAIN V3
 # ==========================================
 with tab2:
     st.info("Upload Foto Final dari Tab 1 & Foto Produk Botol NOBAU untuk hasil prompt video 10s yang 100% akurat.")
@@ -173,7 +173,7 @@ CONTINUITY: One continuous generation, no camera cuts, no face morphing, no prod
                 try:
                     model = genai.GenerativeModel(
                         model_name='gemini-3.8-flash',
-                        tools=[{'google_search': {}}]
+                        tools='google_search'
                     )
                     response = model.generate_content([LOCKED_VIDEO_MASTER, final_img, prod_img])
                     st.success("Master Production System V3 Berhasil Dijalankan!")
