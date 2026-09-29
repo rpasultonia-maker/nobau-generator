@@ -24,34 +24,32 @@ if not api_key:
 # Set API Key
 genai.configure(api_key=api_key)
 
-# Tampilan Upload Gambar (2 Slot Utama)
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("1. Scene Reference (Pose & Environment)")
-    scene_file = st.file_uploader("Upload foto pose / baju / background", type=["jpg", "jpeg", "png"], key="scene")
-    if scene_file:
-        scene_img = Image.open(scene_file)
-        st.image(scene_img, use_container_width=True)
-
-with col2:
-    st.subheader("2. NOBAU Face & Product Reference")
-    face_file = st.file_uploader("Upload foto master wajah model / produk NOBAU", type=["jpg", "jpeg", "png"], key="face")
-    if face_file:
-        face_img = Image.open(face_file)
-        st.image(face_img, use_container_width=True)
-
 st.markdown("---")
 
 # MENU PILIHAN FITUR (TABS)
-tab1, tab2 = st.tabs(["📸 1. MASTER PROMPT IMAGE", "🎬 2. VIDEO CONTENT BRAIN V3 (Flow AI 10s)"])
+tab1, tab2 = st.tabs(["📸 1. MASTER PROMPT IMAGE", "🎬 2. VIDEO CONTENT BRAIN V3"])
 
 # ==========================================
 # TAB 1: MASTER PROMPT IMAGE (FOTO STATIS)
 # ==========================================
 with tab1:
-    st.info("Fitur ini menghasilkan Master Prompt Foto/Selfie Statis untuk Midjourney / Flow AI Image.")
+    st.info("Fitur ini menghasilkan Master Prompt Foto Statis (Menggabungkan Scene & Wajah Model NOBAU).")
     
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("1. Scene Reference")
+        scene_file = st.file_uploader("Upload foto pose / baju / background", type=["jpg", "jpeg", "png"], key="scene_t1")
+        if scene_file:
+            scene_img = Image.open(scene_file)
+            st.image(scene_img, use_container_width=True)
+
+    with col2:
+        st.subheader("2. NOBAU Face Reference")
+        face_file = st.file_uploader("Upload foto master wajah model NOBAU", type=["jpg", "jpeg", "png"], key="face_t1")
+        if face_file:
+            face_img = Image.open(face_file)
+            st.image(face_img, use_container_width=True)
+            
     IMAGE_MASTER_PROMPT = """
 You are an expert AI prompt engineer. Analyze the two provided images:
 - Image 1 is the SCENE REFERENCE (pose, composition, framing, outfit, background, lighting, casual selfie aesthetic).
@@ -80,6 +78,7 @@ PHOTOGRAPHIC STYLE: Authentic Indonesian social-media selfie aesthetic, casual h
 IDENTITY PRIORITY: Image 2 = Identity & Face. Image 1 = Pose, Outfit, Scene, & Style.
 FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation.
 """
+    st.markdown("---")
     if st.button("🚀 Generate Master Prompt Image", type="primary", use_container_width=True):
         if not scene_file or not face_file:
             st.error("Harap upload KEDUA foto terlebih dahulu!")
@@ -94,30 +93,49 @@ FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's
                     st.error(f"Terjadi kesalahan: {e}")
 
 # ==========================================
-# TAB 2: VIDEO CONTENT BRAIN V3 (FLOW AI 10S)
+# TAB 2: VIDEO CONTENT BRAIN V3 (2 UPLOAD: FINAL FOTO + PRODUK BOTOL)
 # ==========================================
 with tab2:
-    st.info("Fitur ini melakukan riset tren otomatis + meracik Script Video UGC 10 Detik & Prompt Video Flow AI V3.")
+    st.info("Upload Foto Final dari Tab 1 & Foto Produk Botol NOBAU untuk hasil prompt video 10s yang 100% akurat.")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("1. Foto Final Result (Model & Scene)")
+        final_file = st.file_uploader("Upload foto hasil dari Tab 1", type=["jpg", "jpeg", "png"], key="final_t2")
+        if final_file:
+            final_img = Image.open(final_file)
+            st.image(final_img, use_container_width=True)
+
+    with col2:
+        st.subheader("2. Master Produk Botol NOBAU")
+        prod_file = st.file_uploader("Upload foto asli botol produk NOBAU", type=["jpg", "jpeg", "png"], key="prod_t2")
+        if prod_file:
+            prod_img = Image.open(prod_file)
+            st.image(prod_img, use_container_width=True)
     
     LOCKED_VIDEO_MASTER = """
 You operate as the CONTENT BRAIN and MASTER PROMPT GENERATOR for NOBAU.
 
-Perform web search research on current Indonesian social media trends/insights regarding daily odor problems, relatable creator hooks, and viral TikTok formats before generating the brief.
+Analyze the two uploaded images:
+- Image 1 is the FINAL GENERATED MODEL PHOTO (provides character identity, facial features, outfit, and environmental context).
+- Image 2 is the EXACT NOBAU PRODUCT BOTTLE REFERENCE (provides exact product appearance, bottle shape, label, typography, cap, and colors).
+
+Perform web search research on current Indonesian social media trends regarding daily odor problems and TikTok creator hooks before generating the brief.
 
 STRICT COMPLIANCE RULES (NOBAU MASTER PRODUCTION SYSTEM V3):
-1. CORE PRODUCTION RULE: Exactly ONE complete 10-second video, 9:16 vertical, one generation, continuous and coherent. No multi-clips or split generation.
-2. VISUAL IDENTITY: Natural Smartphone UGC style, authentic Indonesian TikTok creator feeling, casual everyday environment. NEVER use the word "realistic".
-3. CHARACTER SYSTEM: Use uploaded face reference (Image 2) strictly for identity.
-4. PRODUCT LOCK: Use uploaded product image (Image 2) strictly. Preserve bottle shape, colors, cap, typography. NEVER use or interpret product as "trigger sprayer", "trigger bottle", or "trigger mechanism". Word "spray" refers ONLY to application action.
+1. CORE PRODUCTION RULE: Exactly ONE complete 10-second video, 9:16 vertical, one generation, continuous and coherent. No multi-clips.
+2. VISUAL IDENTITY: Natural Smartphone UGC style, authentic Indonesian TikTok creator feeling. NEVER use the word "realistic".
+3. CHARACTER & SCENE LOCK: Use Image 1 strictly for character face, identity, hair, clothing, and background context.
+4. PRODUCT LOCK: Use Image 2 strictly for the NOBAU spray bottle appearance. Preserve shape, colors, cap, label, and typography 100%. NEVER use or interpret product as "trigger sprayer", "trigger bottle", or "trigger mechanism". Word "spray" refers ONLY to application action.
 5. CONTENT PHILOSOPHY: Strong hook, relatable problem, soft selling, natural CTA.
 6. RHYTHM: 0-3s HOOK/PROBLEM -> 3-6s ACTION/SOLUTION -> 6-8s REACTION/PAYOFF -> 8-10s SOFT CTA.
-7. DIALOGUE: Spoken natural Indonesian. If marked exact, must match exactly.
+7. DIALOGUE: Spoken natural Indonesian.
 8. RESTRICTIONS: No AI-commercial look, no face morphing, no floating hands, no extra fingers, no subtitles/watermarks, no "realistic" wording.
 
 OUTPUT FORMAT:
 
 SECTION 1: NOBAU CONTENT BRAIN (Bahasa Indonesia)
-- Brief & Angle Konten: (Analisis situasi foto + tren/insight riset masalah bau harian).
+- Brief & Angle Konten: (Analisis situasi foto + tren masalah bau harian yang relevan).
 - Target Karakter: (Pria/Wanita + konteks peran).
 - Breakdown Timeline 10s: (0-3s Hook, 3-6s Action, 6-8s Payoff, 8-10s Soft CTA).
 - Dialogue Script (EXACT): (Dialog bahasa Indonesia).
@@ -127,15 +145,15 @@ SECTION 2: FINAL FLOW AI PROMPT (English - Locked Structure)
 Structure: IDENTITY -> PRODUCT -> STORY -> DIALOGUE -> STYLE -> CONTINUITY
 
 Format Output Flow AI Prompt:
-A continuous 10-second vertical 9:16 smartphone UGC video of a young Indonesian creator recorded in [describe environment from Image 1].
+A continuous 10-second vertical 9:16 smartphone UGC video of the creator recorded in [describe environment from Image 1].
 
-IDENTITY: Preserve exact facial structure, hair, and skin tone from Image 2 reference. Wearing [describe outfit from Image 1].
+IDENTITY: Preserve exact facial structure, identity, hairstyle, skin tone, and outfit from Image 1.
 
-PRODUCT: Holding the exact NOBAU spray bottle as shown in Image 2. Bottle shape, cap, label, and colors remain 100% consistent. Hand naturally holding the bottle.
+PRODUCT: Holding the exact NOBAU spray bottle as visually defined in Image 2. Bottle shape, cap, label, and colors remain 100% consistent with Image 2. Hand naturally holding the bottle.
 
 STORY & TIMELINE (0-10s):
-- 0-3s (HOOK): [Action showing problem/hook].
-- 3-6s (ACTION): [Casual spray application towards target object].
+- 0-3s (HOOK): [Action showing problem/hook matching Image 1 context].
+- 3-6s (ACTION): [Casual spray application towards target object/area].
 - 6-8s (PAYOFF): [Satisfied facial expression/reaction].
 - 8-10s (CTA): [Casual recommendation/pointing to product].
 
@@ -146,9 +164,10 @@ CAMERA & STYLE: Authentic Indonesian TikTok creator aesthetic, natural handheld 
 
 CONTINUITY: One continuous generation, no camera cuts, no face morphing, no product redesign, no trigger spray mechanism, no floating limbs, no text or graphics.
 """
-    if st.button("🚀 Run Content Brain V3 & Generate Flow AI Video Prompt", type="primary", use_container_width=True):
-        if not scene_file or not face_file:
-            st.error("Harap upload KEDUA foto terlebih dahulu!")
+    st.markdown("---")
+    if st.button("🚀 Run Content Brain V3 & Generate Video Prompt", type="primary", use_container_width=True):
+        if not final_file or not prod_file:
+            st.error("Harap upload KEDUA foto terlebih dahulu (Foto Model Result & Foto Botol NOBAU)!")
         else:
             with st.spinner("Content Brain sedang meriset tren & menyusun Master V3 Video Prompt..."):
                 try:
@@ -156,7 +175,7 @@ CONTINUITY: One continuous generation, no camera cuts, no face morphing, no prod
                         model_name='gemini-3.8-flash',
                         tools=[{'google_search': {}}]
                     )
-                    response = model.generate_content([LOCKED_VIDEO_MASTER, scene_img, face_img])
+                    response = model.generate_content([LOCKED_VIDEO_MASTER, final_img, prod_img])
                     st.success("Master Production System V3 Berhasil Dijalankan!")
                     st.markdown(response.text)
                 except Exception as e:
