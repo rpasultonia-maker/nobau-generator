@@ -3,10 +3,10 @@ import google.generativeai as genai
 from PIL import Image
 
 # Config Halaman
-st.set_page_config(page_title="NOBAU Content Prompt Generator", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="NOBAU Content & Prompt Generator", page_icon="⚡", layout="wide")
 
-st.title("⚡ NOBAU Content Prompt Generator")
-st.caption("Otomatisasi pembuatan prompt detail Flow AI / Midjourney berdasarkan Scene & Wajah Model NOBAU")
+st.title("⚡ NOBAU Content & Prompt Generator")
+st.caption("Otomatisasi pembuatan Ide Konten (Hook + Caption) & Prompt Detail Flow AI/Midjourney")
 
 # Cek API Key dari Streamlit Secrets atau Sidebar
 st.sidebar.header("🔑 Pengaturan API")
@@ -41,96 +41,71 @@ with col2:
         face_img = Image.open(face_file)
         st.image(face_img, use_container_width=True)
 
-# Master Prompt Instructions System
+# Master Prompt Instructions System (Ide Konten + Prompt Visual)
 MASTER_PROMPT_TEMPLATE = """
-You are an expert AI prompt engineer. Analyze the two provided images:
-- Image 1 is the SCENE REFERENCE (for pose, composition, framing, outfit, background, lighting, and casual smartphone selfie aesthetic).
-- Image 2 is the NOBAU FACE REFERENCE (for the exact female model's face identity, facial structure, skin tone, features, and hairstyle).
+You are an expert Content Creator Strategy & AI Prompt Engineer for NOBAU (an Indonesian brand specializing in odor eliminator / penghilang bau products with 8 product variants).
 
-Generate a highly structured, photorealistic AI image generation prompt following this EXACT template:
+Analyze the two provided images:
+- Image 1 is the SCENE REFERENCE (pose, framing, environment, lighting, casual selfie style).
+- Image 2 is the NOBAU FACE REFERENCE (exact female model identity).
+
+Deliver your response in TWO SECTIONS:
+
+---
+SECTION 1: IDE KONTEN NOBAU (Dalam Bahasa Indonesia)
+Berdasarkan suasana/pose dari Image 1, buatkan ide konten harian kasual yang relevan dengan produk NOBAU:
+1. **Sudut Pandang / Storyline:** (Penjelasan singkat situasi dalam foto ini cocok untuk promosi masalah bau apa, misal: bau sepatu, helm, studio, mobil, pakaian, dll).
+2. **Hook Text On-Screen:** (Kalimat singkat 3-6 kata yang bikin orang berhenti scrolling, gaya kasual anak muda).
+3. **Caption Instagram/TikTok:** (2-3 paragraf ramah, relateable, menyenggol masalah bau harian, lalu solusi dari produk NOBAU).
+4. **Call to Action (CTA):** (Ajakan klik link bio / checkout).
+5. **Hashtag:** (5 hashtag relevan).
+
+---
+SECTION 2: MASTER PROMPT VISUAL (English - for Flow AI / Midjourney)
+Generate a highly structured, photorealistic AI image prompt:
 
 Create a highly natural, photorealistic smartphone selfie photograph based on the uploaded reference images.
 
 REFERENCE IMAGE ROLE:
-Use the scene reference image (Image 1) as the strict reference for:
-- overall composition
-- camera position / selfie perspective
-- body pose, arm and hand positioning, head tilt, facial direction
-- clothing style, fit, and fabric texture
-- background environment and lighting
-- casual smartphone photography aesthetic
+Use Image 1 strictly for composition, camera perspective, body pose, clothing, background, and casual smartphone photography aesthetic.
 
 FACE IDENTITY — CRITICAL:
-The woman's face and identity must come strictly from the NOBAU female model reference image (Image 2).
-Replace the face/identity of the woman in the scene reference with the NOBAU female model's exact facial identity.
-Preserve the NOBAU model's:
-- facial structure, face proportions, eyes, eyebrows, nose, lips, jawline, cheek structure, skin tone, natural facial asymmetry, and recognizable identity.
-Do NOT blend the two faces. Do NOT average the identities. Do NOT create a new face.
+Use Image 2 strictly for the female model's exact face identity, facial structure, skin tone, features, and hairstyle. Replace the face in Image 1 with Image 2's identity. Do NOT blend faces.
 
-SUBJECT:
-A young Indonesian woman taking a casual smartphone selfie.
-
-POSE:
-[Extract and describe the precise pose from Image 1 in detail, including head tilt, arm placement, hand placement/gestures, and overall posture]
-
-FACIAL EXPRESSION:
-Natural relaxed feminine expression with a subtle soft smile, playful and confident. Natural eyes looking toward the smartphone camera.
-
-HAIR:
-Preserve the NOBAU model's recognizable hairstyle from Image 2 while allowing it to naturally adjust to the pose in Image 1.
-
-CLOTHING:
-[Extract and describe the exact clothing style, fabric type, colors, and textures visible in Image 1]
-
-ACCESSORIES:
-[Extract and describe any visible accessories/jewelry from Image 1]
-
-ENVIRONMENT:
-[Extract and describe the exact background, environment, location, paving/flooring, buildings, foliage, or surrounding elements visible in Image 1]
-
-CAMERA:
-Authentic smartphone front-camera selfie perspective. High-angle selfie, 24–28mm equivalent lens perspective, close framing with natural perspective distortion.
-
-LIGHTING:
-[Extract and describe the lighting quality from Image 1, e.g., natural outdoor daylight, soft overcast, diffused daylight]
-
-SKIN & REALISM:
-Natural realistic skin texture with visible pores and subtle imperfections. No plastic skin, no heavy beauty filters, no airbrushed skin.
-
-PHOTOGRAPHIC STYLE:
-Authentic Indonesian/Asian social-media selfie aesthetic. Casual handheld smartphone photograph, spontaneous feeling, realistic dynamic range.
-
-IDENTITY PRIORITY:
-NOBAU female model reference (Image 2) = identity and face.
-Scene reference (Image 1) = pose, composition, camera perspective, clothing, environment, and photographic style.
-
-FINAL IMAGE:
-A believable, spontaneous smartphone selfie of the NOBAU female model in the exact visual situation of the scene reference image.
+SUBJECT: A young Indonesian woman taking a casual smartphone selfie.
+POSE: [Extract detailed pose from Image 1]
+FACIAL EXPRESSION: Natural relaxed feminine expression, subtle smile, playful and confident.
+HAIR: Preserve NOBAU model's hairstyle from Image 2 adjusting naturally to Image 1's pose.
+CLOTHING: [Extract clothing details from Image 1]
+ENVIRONMENT: [Extract background details from Image 1]
+CAMERA: Authentic smartphone front-camera selfie perspective, high angle, 24–28mm equivalent.
+LIGHTING: [Extract lighting from Image 1]
+SKIN & REALISM: Natural realistic skin texture, pores, imperfections, no heavy beauty filters.
+PHOTOGRAPHIC STYLE: Authentic Indonesian social-media selfie aesthetic, casual handheld photo.
+IDENTITY PRIORITY: Image 2 = Face & Identity. Image 1 = Pose, Outfit, Scene, & Style.
+FINAL IMAGE: Believable smartphone selfie of NOBAU female model in Image 1's exact visual context.
 """
 
 # Tombol Action
 st.markdown("---")
-if st.button("🚀 Generate Master Prompt NOBAU", type="primary", use_container_width=True):
+if st.button("🚀 Generate Ide Konten & Master Prompt NOBAU", type="primary", use_container_width=True):
     if not scene_file or not face_file:
         st.error("Harap upload KEDUA foto terlebih dahulu (Scene Reference & Face Reference)!")
     else:
-        with st.spinner("AI sedang menganalisis kedua gambar dan meracik prompt..."):
+        with st.spinner("AI sedang menyusun ide konten & meracik prompt visual..."):
             try:
-                # Menggunakan model Gemini 3.8 Flash
                 model = genai.GenerativeModel('gemini-3.8-flash')
                 
-                # Memproses gambar & prompt
                 response = model.generate_content([
                     MASTER_PROMPT_TEMPLATE,
                     scene_img,
                     face_img
                 ])
                 
-                st.success("Prompt Berhasil Dibuat!")
+                st.success("Ide Konten & Prompt Berhasil Dibuat!")
                 
                 # Display Output
-                st.subheader("📋 Hasil Prompt Detail (Tinggal Copy-Paste):")
-                st.code(response.text, language="text")
+                st.markdown(response.text)
                 
             except Exception as e:
                 st.error(f"Terjadi kesalahan: {e}")
