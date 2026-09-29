@@ -120,7 +120,7 @@ Analyze the two uploaded images:
 - Image 1 is the FINAL GENERATED MODEL PHOTO (provides character identity, facial features, outfit, and environmental context).
 - Image 2 is the EXACT NOBAU PRODUCT BOTTLE REFERENCE (provides exact product appearance, bottle shape, label, typography, cap, and colors).
 
-Perform web search research on current Indonesian social media trends regarding daily odor problems and TikTok creator hooks before generating the brief.
+Incorporate trending Indonesian social media insights regarding daily odor problems and viral TikTok creator hooks when generating the brief.
 
 STRICT COMPLIANCE RULES (NOBAU MASTER PRODUCTION SYSTEM V3):
 1. CORE PRODUCTION RULE: Exactly ONE complete 10-second video, 9:16 vertical, one generation, continuous and coherent. No multi-clips.
@@ -171,10 +171,8 @@ CONTINUITY: One continuous generation, no camera cuts, no face morphing, no prod
         else:
             with st.spinner("Content Brain sedang meriset tren & menyusun Master V3 Video Prompt..."):
                 try:
-                    model = genai.GenerativeModel(
-                        model_name='gemini-3.8-flash',
-                        tools='google_search'
-                    )
+                    # Menggunakan model standar tanpa parameter tools bermasalah
+                    model = genai.GenerativeModel('gemini-3.8-flash')
                     response = model.generate_content([LOCKED_VIDEO_MASTER, final_img, prod_img])
                     st.success("Master Production System V3 Berhasil Dijalankan!")
                     st.markdown(response.text)
