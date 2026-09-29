@@ -116,7 +116,7 @@ if st.button("🚀 Generate Master Prompt NOBAU", type="primary", use_container_
     else:
         with st.spinner("AI sedang menganalisis kedua gambar dan meracik prompt..."):
             try:
-                # Menggunakan model Gemini Vision
+                # Menggunakan model Gemini 2.5 Flash terbaru
                 model = genai.GenerativeModel('gemini-2.5-flash')
                 
                 # Memproses gambar & prompt
