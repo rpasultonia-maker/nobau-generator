@@ -92,7 +92,7 @@ with tab1:
                     """
 
                     response_f1 = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.8-flash',
                         contents=[sys_prompt_f1, img1_pil, img2_pil]
                     )
                     prompt_img = response_f1.text
@@ -170,7 +170,7 @@ with tab2:
                     """
 
                     response_f2 = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.8-flash',
                         contents=[sys_prompt_f2, img_m_pil, img_p_pil]
                     )
                     prompt_vid = response_f2.text
