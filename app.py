@@ -11,7 +11,7 @@ st.set_page_config(
 st.title("🧪 NOBAU AI Content Brain & Prompt Studio")
 st.caption("Automation Studio for Scale 1.000 Affiliate UGC Videos")
 
-# Konfigurasi Gemini API (Pastikan API Key tersimpan di Streamlit Secrets atau Environment)
+# Konfigurasi Gemini API jika tersedia di Secrets
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
@@ -24,13 +24,13 @@ with col1:
     st.subheader("1. Foto Model / Creator")
     uploaded_model = st.file_uploader("Upload Foto Model / Creator", type=["jpg", "jpeg", "png"], key="model")
     if uploaded_model:
-        st.image(uploaded_model, use_column_width=True)
+        st.image(uploaded_model, use_container_width=True)
 
 with col2:
     st.subheader("2. Foto Produk NOBAU")
     uploaded_product = st.file_uploader("Upload Foto Produk NOBAU", type=["jpg", "jpeg", "png"], key="product")
     if uploaded_product:
-        st.image(uploaded_product, use_column_width=True)
+        st.image(uploaded_product, use_container_width=True)
 
 st.divider()
 
@@ -48,11 +48,11 @@ with col_btn2:
 st.divider()
 
 # =========================================================
-# 3. LOGIKA AI REALTIME RISET HOOK & PROMPT GENERATOR
+# 3. LOGIKA OTOMATIS GENERATE + GEMINI AI HOOK ENGINE
 # =========================================================
 if btn_image:
     if not uploaded_model or not uploaded_product:
-        st.warning("⚠️️ Mohon upload Foto Model dan Foto Produk terlebih dahulu!")
+        st.warning("⚠️ Mohon upload Foto Model dan Foto Produk terlebih dahulu!")
     else:
         st.success("✨ Master Image Prompt Generated!")
         prompt_img = (
@@ -66,16 +66,15 @@ if btn_video:
     if not uploaded_model or not uploaded_product:
         st.warning("⚠️ Mohon upload Foto Model dan Foto Produk terlebih dahulu!")
     else:
-        with st.spinner("🤖 Content Brain V3 sedang menganalisis foto & meriset ide hook real-time..."):
+        with st.spinner("🤖 Content Brain V3 sedang meriset ide hook real-time dari foto..."):
             try:
-                # Menggunakan Gemini untuk riset visual & analisis produk otomatis
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 img_model_pil = Image.open(uploaded_model)
                 img_product_pil = Image.open(uploaded_product)
 
                 sys_prompt = """
                 Analisis kedua foto ini (Foto 1: Model, Foto 2: Produk NOBAU).
-                Buatkan prompt video UGC Flow AI 10 detik dengan DYNAMIC HOOK paling tren dan relevan berdasarkan produk & karakter di foto.
+                Buatkan prompt video UGC Flow AI 10 detik dengan DYNAMIC HOOK paling tren berdasarkan produk & karakter di foto.
                 Gunakan format baku berikut:
 
                 A continuous 10-second vertical 9:16 smartphone UGC video recorded in a brightly lit, aesthetic bedroom vanity setup.
@@ -94,8 +93,7 @@ if btn_video:
                 response = model.generate_content([sys_prompt, img_model_pil, img_product_pil])
                 prompt_vid = response.text
 
-            except Exception as e:
-                # Fallback jika API Key belum dipasang / limit habis
+            except Exception:
                 prompt_vid = """A continuous 10-second vertical 9:16 smartphone UGC video recorded in a brightly lit, aesthetic bedroom vanity setup.
 
 IDENTITY: Preserve exact facial structure, skin tone, hair style, jewelry, and specific features as defined in Image 1.
