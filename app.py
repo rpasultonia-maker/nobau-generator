@@ -24,12 +24,10 @@ tab1, tab2 = st.tabs([
 
 # Fungsi pintar pemanggilan Gemini dengan Auto-Retry & Fallback Model
 def generate_content_safe(client, prompt, images):
-    # Urutan model yang dicoba jika server sedang high demand (503)
     models_to_try = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
     
     last_exception = None
     for model_name in models_to_try:
-        # Coba hingga 3 kali retry per model jika kena 503
         for attempt in range(3):
             try:
                 response = client.models.generate_content(
@@ -40,17 +38,16 @@ def generate_content_safe(client, prompt, images):
             except Exception as e:
                 last_exception = e
                 err_str = str(e)
-                # Jika error 503 (high demand), tunggu 1.5 detik lalu coba lagi
                 if "503" in err_str or "UNAVAILABLE" in err_str:
                     time.sleep(1.5)
                     continue
                 else:
-                    break # Jika error lain (bukan 503), coba model berikutnya
+                    break
                     
     raise last_exception
 
 # =========================================================
-# FITUR 1: MASTER PROMPT IMAGE GENERATOR (GEMINI VISION DYNAMIC)
+# FITUR 1: MASTER PROMPT IMAGE GENERATOR (TAJAM & KONSISTEN)
 # =========================================================
 with tab1:
     st.header("📌 Fitur 1: Generate Master Image Prompt")
@@ -86,42 +83,53 @@ with tab1:
         elif not client:
             st.error("⚠️ GEMINI_API_KEY belum terpasang di Streamlit Secrets!")
         else:
-            with st.spinner("🤖 Gemini Vision sedang menganalisis pose, outfit, lighting & lingkungan Image 1..."):
+            with st.spinner("🤖 Gemini Vision sedang mengekstrak mikro-detail wajah Image 2 & pose Image 1..."):
                 try:
                     img1_pil = Image.open(uploaded_style)
                     img2_pil = Image.open(uploaded_face)
 
                     sys_prompt_f1 = """
-                    Analisis Image 1 (Referensi Style & Pose) dan Image 2 (Identitas Wajah NOBAU).
-                    Tugasmu adalah menghasilkan Master Image Prompt baku sesuai format persis di bawah ini.
-                    Isi detail POSE, FACIAL EXPRESSION, CLOTHING, ENVIRONMENT, LIGHTING, CAMERA secara SANGAT SPESIFIK dan AKURAT berdasarkan elemen visual asli yang kamu lihat di Image 1!
+                    Analisis Image 1 (Referensi Style & Pose) dan Image 2 (Identitas Wajah Karakter NOBAU).
+                    Tugasmu adalah menghasilkan Master Image Prompt baku yang SANGAT PRESISI dalam mentransfer wajah Image 2 ke Image 1.
 
-                    FORMAT OUTPUT (WAJIB DIIKUTI):
-                    Create a natural smartphone selfie photograph based on the uploaded reference images.
+                    Instruksi Analisis:
+                    1. Bedah Image 2 dan sebutkan fitur mikroskopis wajahnya (bentuk mata, alis, bentuk hidung, bibir, rahang, skin tone, dan ciri khas).
+                    2. Bedah Image 1 untuk POSE, OUTFIT, LIGHTING, CAMERA, dan ENVIRONMENT.
+
+                    FORMAT OUTPUT (WAJIB DIIKUTI PERSIS):
+                    Create a natural photorealistic smartphone selfie based on the uploaded reference images.
 
                     REFERENCE IMAGE ROLE:
-                    Use Image 1 strictly for composition, camera perspective, body pose, clothing style, background environment, lighting, and casual smartphone photography aesthetic.
+                    Image 1 = Composition, camera angle, body pose, clothing style, background environment, and lighting ONLY.
+                    Image 2 = CRITICAL FACE IDENTITY & HEAD ONLY.
 
-                    FACE IDENTITY — CRITICAL:
-                    The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve facial structure, eyes, nose, lips, jawline, skin tone. Do NOT blend faces.
+                    FACE IDENTITY & CHARACTER FUSION (STRICT ZERO-MORPHING):
+                    Replace the head and face of the person in Image 1 entirely with the exact facial identity from Image 2. 
+                    Preserve Image 2's exact facial structure, eye shape, nose bridge, lip shape, jawline contour, skin tone, and facial proportions. 
+                    DO NOT blend, mix, or merge facial features from Image 1 into Image 2. The final facial identity must be 100% recognizable as the NOBAU model in Image 2.
 
-                    SUBJECT: A young Indonesian woman taking a casual smartphone selfie.
-                    POSE: [Deskripsikan pose tangan, posisi tubuh, dan gesture dari Image 1 secara presisi]
-                    FACIAL EXPRESSION: [Deskripsikan ekspresi wajah dari Image 1]
-                    HAIR: Preserve NOBAU model's recognizable hairstyle from Image 2: voluminous, layered dark brown hair with bouncy curls and soft face-framing fringe.
-                    CLOTHING: [Deskripsikan pakaian, warna, bahan, serta aksesori seperti kalung/jam tangan dari Image 1 secara presisi]
-                    ENVIRONMENT: [Deskripsikan ruangan/latar belakang dari Image 1 secara presisi]
-                    CAMERA: Authentic smartphone front-camera selfie perspective, high-angle/eye-level.
-                    LIGHTING: [Deskripsikan pencahayaan dari Image 1]
-                    SKIN & REALISM: Natural realistic skin texture, pores, subtle imperfections, no plastic skin, no heavy beauty filters.
-                    PHOTOGRAPHIC STYLE: Authentic Indonesian social-media selfie aesthetic, casual handheld photo.
-                    IDENTITY PRIORITY: Image 2 = Identity & Face. Image 1 = Pose, Outfit, Scene, & Style.
-                    FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation.
+                    EXACT FACE DETAILS FROM IMAGE 2:
+                    [Sebutkan detail fisik spesifik wajah dari Image 2 yang kamu analisis, contoh: almond-shaped dark brown eyes, soft defined jawline, natural fair Indonesian skin tone, natural full lips]
+
+                    SUBJECT & POSE (DERIVED FROM IMAGE 1):
+                    [Deskripsikan pose tangan, posisi tubuh, dan gesture dari Image 1 secara presisi]
+
+                    HAIR STYLE:
+                    Preserve the NOBAU model's recognizable hairstyle from Image 2: [Deskripsikan gaya/warna rambut dari Image 2 secara presisi].
+
+                    CLOTHING & ACCESSORIES (DERIVED FROM IMAGE 1):
+                    [Deskripsikan pakaian, warna, bahan, serta aksesori seperti kalung/jam tangan dari Image 1 secara presisi]
+
+                    ENVIRONMENT & LIGHTING (DERIVED FROM IMAGE 1):
+                    [Deskripsikan ruangan/latar belakang dan lighting dari Image 1 secara presisi]
+
+                    SKIN REALISM & QUALITY:
+                    Hyper-realistic natural skin texture, visible pores, realistic lighting reflections, raw photograph, shot on iPhone front camera, 8k resolution, UGC aesthetic, no smooth plastic skin filter --ar 9:16 --cw 100
                     """
 
                     prompt_img = generate_content_safe(client, sys_prompt_f1, [img1_pil, img2_pil])
                     st.success("✨ Master Image Prompt Generated!")
-                    st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=380)
+                    st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=420)
                 except Exception as e:
                     st.error(f"Gagal memanggil Gemini API: {e}")
 
