@@ -1,6 +1,5 @@
 import streamlit as st
 
-# Config Halaman
 st.set_page_config(
     page_title="NOBAU AI Content Generator",
     page_icon="🧪",
@@ -8,10 +7,10 @@ st.set_page_config(
 )
 
 st.title("🧪 NOBAU AI Content Brain & Prompt Studio")
-st.write("Upload 2 foto di bawah untuk langsung menghasilkan prompt video UGC:")
+st.write("Automation Studio for Scale 1.000 Affiliate UGC Videos")
 
 # =========================================================
-# 1. TAMPILAN UPLOAD 2 FOTO (LANGSUNG MUNCUL DI DEPAN)
+# 1. AREA UPLOAD FOTO (LANGSUNG TAMPIL DI DEPAN)
 # =========================================================
 col1, col2 = st.columns(2)
 
@@ -30,20 +29,71 @@ with col2:
 st.divider()
 
 # =========================================================
-# 2. PROMPT RESULT (OTOMATIS / KETIKA FOTO TERSEDIA)
+# 2. PARAMETER & PILIHAN 2 FITUR ULTIMATE
 # =========================================================
-if uploaded_model and uploaded_product:
-    st.success("✨ Foto Berhasil Diupload! Master Video Prompt Flow AI Generated:")
-    
-    prompt_result = """A continuous 10-second vertical 9:16 smartphone UGC video recorded in a brightly lit room.
+col_param, col_action = st.columns([1, 1])
 
-IDENTITY: Preserve exact facial structure, skin tone, hair style, and features as defined in Image 1.
-PRODUCT: Holding the exact compact travel-size NOBAU spray bottle as visually defined in Image 2.
+with col_param:
+    st.subheader("📌 Input Parameter Creator")
+    niche = st.selectbox(
+        "Pilih Niche Creator / Channel:",
+        ["Personal Care / Beauty", "Otomotif / Helm / Mobil", "Daily Vlog / Outfit", "Households / Home Care"]
+    )
+    
+    varian = st.selectbox(
+        "Pilih Varian Produk NOBAU:",
+        [
+            "NOBAU DeoFresh Atasi Bau Ketiak",
+            "NOBAU Penghilang Bau Helm Pocket",
+            "NOBAU Penghilang Bau Helm",
+            "NOBAU Penghilang Bau Kaki",
+            "NOBAU Penghilang Bau Outfit",
+            "NOBAU Penghilang Bau Peci",
+            "NOBAU Penghilang Bau Ruangan",
+            "NOBAU Penghilang Bau Dapur",
+            "NOBAU Penghilang Bau Rokok"
+        ]
+    )
+    
+    deskripsi_karakter = st.text_area(
+        "Deskripsi Karakter (Opsional):",
+        value="Indonesian young adult female, long dark wavy hair, friendly face"
+    )
+
+with col_action:
+    st.subheader("🎬 Generator Action")
+    
+    # FITUR 1: MASTER PROMPT IMAGE
+    btn_image = st.button("📌 Generate Master Prompt Image", type="secondary", use_container_width=True)
+    
+    # FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT
+    btn_video = st.button("🚀 Run Content Brain V3 & Generate Video Prompt", type="primary", use_container_width=True)
+
+st.divider()
+
+# =========================================================
+# 3. LOGIKA EKSEKUSI 2 FITUR
+# =========================================================
+if btn_image:
+    if not uploaded_model or not uploaded_product:
+        st.warning("⚠️️ Mohon upload Foto Model dan Foto Produk terlebih dahulu di bagian atas!")
+    else:
+        st.success("✨ Master Image Prompt Generated!")
+        prompt_img = f"A photorealistic studio shot of an {deskripsi_karakter}. Holding {varian}. Clean lighting, 8k resolution, UGC aesthetic --ar 9:16"
+        st.text_area("Copy-Paste Image Prompt Ini:", value=prompt_img, height=150)
+
+if btn_video:
+    if not uploaded_model or not uploaded_product:
+        st.warning("⚠️ Mohon upload Foto Model dan Foto Produk terlebih dahulu di bagian atas!")
+    else:
+        st.success("🚀 Master Video Prompt Flow AI Generated!")
+        prompt_vid = f"""A continuous 10-second vertical 9:16 smartphone UGC video recorded in a brightly lit room.
+
+IDENTITY: Preserve exact facial structure, skin tone, hair style, and features as defined in Image 1 ({deskripsi_karakter}).
+PRODUCT (PRECISION SCALE): Holding the exact compact travel-size NOBAU spray bottle as visually defined in Image 2 ({varian}).
 
 STORY & TIMELINE (0-10s):
-0-3s (HOOK): Creator dandan di depan kaca.
-3-10s (BODY): Memegang produk NOBAU dengan jelas ke kamera."""
-
-    st.text_area("Copy-Paste Prompt Ini ke Flow AI / Midjourney:", value=prompt_result, height=220)
-else:
-    st.info("💡 Silakan upload kedua foto (Foto Model dan Foto Produk) di atas untuk menampilkan prompt.")
+0-3s (HOOK): Creator dandan di depan kaca. cemas bau pas aktivitas ({niche}).
+3-10s (BODY): Memegang produk {varian} dengan jelas ke kamera, langsung segar seketika."""
+        
+        st.text_area("Copy-Paste Video Prompt Ini ke Flow AI:", value=prompt_vid, height=220)
