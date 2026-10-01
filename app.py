@@ -21,8 +21,8 @@ tab1, tab2 = st.tabs([
     "🚀 FITUR 2: Content Brain V3 Video Prompt (Flow AI)"
 ])
 
-# Master Prompt Fallback (Jika API 429/Limit)
-FALLBACK_F1 = """Create a natural smartphone selfie photograph based on the uploaded reference images.
+# Template Fallback Baku Fitur 1 (Persis Template Permintaan Kamu)
+FALLBACK_F1 = """Create a highly natural, photorealistic smartphone selfie photograph based on the uploaded reference images.
 
 REFERENCE IMAGE ROLE:
 Use Image 1 strictly for composition, camera perspective, body pose, clothing style, background environment, lighting, and casual smartphone photography aesthetic.
@@ -31,18 +31,19 @@ FACE IDENTITY — CRITICAL:
 The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve facial structure, eyes, nose, lips, jawline, skin tone. Do NOT blend faces.
 
 SUBJECT: A young Indonesian woman taking a casual smartphone selfie.
-POSE: Seated comfortably, resting head naturally while smiling softly at the selfie camera.
+POSE: High-angle, close-up perspective with right hand raised behind the head; body angled slightly forward toward the lens in a relaxed, casual selfie pose.
 FACIAL EXPRESSION: Natural relaxed feminine expression with a subtle soft smile, playful and confident.
-HAIR: Preserve NOBAU model's recognizable hairstyle from Image 2: voluminous, layered dark brown hair with bouncy curls and soft face-framing fringe.
-CLOTHING: Stylish casual top matching Image 1's outfit style.
-ENVIRONMENT: Indoor aesthetic room setting matching Image 1's exact background.
-CAMERA: Authentic smartphone front-camera selfie perspective, high-angle/eye-level.
-LIGHTING: Natural daylight softly diffusing across the scene.
+HAIR: Preserve NOBAU model's recognizable hairstyle from Image 2: voluminous, dark brown layered hair with soft, bouncy blowout curls.
+CLOTHING: Black ribbed camisole top featuring scalloped lace trim along the deep neckline, with thin double straps showing pink bra straps underneath.
+ENVIRONMENT: Simple indoor background with a plain neutral wall on one side and a warm wooden paneled door on the other.
+CAMERA: Authentic smartphone front-camera selfie perspective, high-angle, 24–28mm equivalent.
+LIGHTING: Soft, diffused direct indoor lighting casting gentle highlights on the forehead, nose, and shoulders.
 SKIN & REALISM: Natural realistic skin texture, pores, subtle imperfections, no plastic skin, no heavy beauty filters.
 PHOTOGRAPHIC STYLE: Authentic Indonesian social-media selfie aesthetic, casual handheld photo.
 IDENTITY PRIORITY: Image 2 = Identity & Face. Image 1 = Pose, Outfit, Scene, & Style.
 FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation."""
 
+# Template Fallback Baku Fitur 2
 FALLBACK_F2 = """A continuous 10-second vertical 9:16 smartphone UGC video recorded inside an aesthetic indoor setting, matching the exact setting of Image 1.
 
 IDENTITY: Preserve exact facial structure, identity, hair style, skin tone, casual stylish top, and natural makeup matching Image 1.
@@ -56,7 +57,7 @@ STORY & TIMELINE (0-10s):
 8-10s (CTA): Holds the small 60ml NOBAU bottle forward at chest level toward the camera lens, nodding approvingly.
 
 DIALOGUE (Spoken natively in conversational Indonesian, EXACTLY):
-"Ruangan bau bikin gak fokus? Semprot NOBAU Penghilang Bau, segar seketika!"
+"Habis ngerokok tapi mau ketemu doi? Semprot NOBAU Penghilang Bau Rokok, bau apek langsung hilang seketika!"
 
 CAMERA & STYLE: Authentic Indonesian TikTok creator aesthetic, natural handheld camera shake, soft natural daylight, casual front-facing selfie camera angle.
 
@@ -80,13 +81,15 @@ def generate_content_safe(client, prompt, images, fallback_text):
                 time.sleep(1.5)
                 continue
             elif "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "quota" in err_str:
-                st.warning("⚠️ Limit kuota API Gemini tercapai (20 req/hari). Menampilkan Master Prompt Standar Baku:")
+                st.warning("⚠️ Limit kuota API Gemini tercapai. Menampilkan Master Prompt Standar Baku:")
                 return fallback_text
             else:
                 return fallback_text
     return fallback_text
 
-# FITUR 1
+# =========================================================
+# FITUR 1: MASTER PROMPT IMAGE GENERATOR
+# =========================================================
 with tab1:
     st.header("📌 Fitur 1: Generate Master Image Prompt")
     col_f1_1, col_f1_2 = st.columns(2)
@@ -108,25 +111,25 @@ with tab1:
                 sys_prompt_f1 = """
                 Analisis Image 1 (Referensi Style & Pose) dan Image 2 (Identitas Wajah NOBAU).
                 Hasilkan Master Image Prompt baku sesuai format persis di bawah ini.
-                Isi detail POSE, FACIAL EXPRESSION, CLOTHING, ENVIRONMENT, LIGHTING, CAMERA secara SANGAT SPESIFIK dan AKURAT berdasarkan elemen visual asli yang kamu lihat di Image 1!
+                Isi detail POSE, FACIAL EXPRESSION, CLOTHING, ENVIRONMENT, LIGHTING secara SANGAT SPESIFIK dan AKURAT berdasarkan elemen visual asli yang kamu lihat di Image 1!
 
                 FORMAT OUTPUT:
-                Create a natural smartphone selfie photograph based on the uploaded reference images.
+                Create a highly natural, photorealistic smartphone selfie photograph based on the uploaded reference images.
 
                 REFERENCE IMAGE ROLE:
                 Use Image 1 strictly for composition, camera perspective, body pose, clothing style, background environment, lighting, and casual smartphone photography aesthetic.
 
                 FACE IDENTITY — CRITICAL:
-                The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve exact facial structure, eyes, nose, lips, jawline, skin tone, and specific facial proportions extracted from Image 2 [Sebutkan detail fisik wajah Image 2 secara singkat]. Do NOT blend faces.
+                The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve facial structure, eyes, nose, lips, jawline, skin tone. Do NOT blend faces.
 
                 SUBJECT: A young Indonesian woman taking a casual smartphone selfie.
-                POSE: [Deskripsikan pose dari Image 1]
-                FACIAL EXPRESSION: [Deskripsikan ekspresi dari Image 1]
-                HAIR: Preserve NOBAU model's recognizable hairstyle from Image 2: voluminous, layered dark brown hair with bouncy curls and soft face-framing fringe.
-                CLOTHING: [Deskripsikan pakaian & aksesori dari Image 1]
-                ENVIRONMENT: [Deskripsikan ruangan/latar dari Image 1]
-                CAMERA: Authentic smartphone front-camera selfie perspective, high-angle/eye-level.
-                LIGHTING: [Deskripsikan pencahayaan dari Image 1]
+                POSE: [Deskripsikan pose dari Image 1 secara presisi]
+                FACIAL EXPRESSION: [Deskripsikan ekspresi dari Image 1 secara presisi]
+                HAIR: Preserve NOBAU model's recognizable hairstyle from Image 2: [Deskripsikan gaya rambut dari Image 2 secara presisi].
+                CLOTHING: [Deskripsikan pakaian & aksesori dari Image 1 secara presisi]
+                ENVIRONMENT: [Deskripsikan ruangan/latar dari Image 1 secara presisi]
+                CAMERA: Authentic smartphone front-camera selfie perspective, high-angle, 24–28mm equivalent.
+                LIGHTING: [Deskripsikan pencahayaan dari Image 1 secara presisi]
                 SKIN & REALISM: Natural realistic skin texture, pores, subtle imperfections, no plastic skin, no heavy beauty filters.
                 PHOTOGRAPHIC STYLE: Authentic Indonesian social-media selfie aesthetic, casual handheld photo.
                 IDENTITY PRIORITY: Image 2 = Identity & Face. Image 1 = Pose, Outfit, Scene, & Style.
@@ -136,7 +139,9 @@ with tab1:
                 st.success("✨ Master Image Prompt Generated!")
                 st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=380)
 
-# FITUR 2
+# =========================================================
+# FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR
+# =========================================================
 with tab2:
     st.header("🚀 Fitur 2: Content Brain V3 & Video Prompt Generator")
     col_v1, col_v2 = st.columns(2)
@@ -160,15 +165,15 @@ with tab2:
                 Hasilkan Master Video Prompt UGC 10 detik sesuai format baku berikut.
 
                 FORMAT OUTPUT:
-                A continuous 10-second vertical 9:16 smartphone UGC video recorded inside [Deskripsikan lokasi dari Image 1], matching the exact setting of Image 1.
+                A continuous 10-second vertical 9:16 smartphone UGC video recorded inside [Deskripsikan lokasi dari Image 1 secara presisi], matching the exact setting of Image 1.
 
-                IDENTITY: Preserve exact facial structure, identity, hair style, skin tone, [Deskripsikan outfit dari Image 1], and natural makeup matching Image 1.
+                IDENTITY: Preserve exact facial structure, identity, hair style, skin tone, [Deskripsikan outfit dari Image 1 secara presisi], and natural makeup matching Image 1.
 
-                PRODUCT: Holding the exact compact travel-size 60ml NOBAU spray bottle as visually defined in Image 2. The bottle is small and fits comfortably within a single palm, matching realistic 60ml bottle scale relative to her hand. [Deskripsikan detail visual label & warna botol dari Image 2].
+                PRODUCT: Holding the exact compact travel-size 60ml NOBAU spray bottle as visually defined in Image 2. The bottle is small and fits comfortably within a single palm, matching realistic 60ml bottle scale relative to her hand. [Deskripsikan detail visual label & warna botol dari Image 2 secara presisi].
 
                 STORY & TIMELINE (0-10s):
                 0-3s (HOOK): [Buatkan ide hook visual & reaksi masalah bau yang relevan dari Image 1 & Image 2]
-                3-6s (ACTION): [Aksi mengambil produk, menyemprotkan produk sambil bicara ke kamera]
+                3-6s (ACTION): [Aksi mengambil produk, memegang di telapak tangan, menyemprotkan produk sambil bicara ke kamera]
                 6-8s (PAYOFF): [Reaksi lega/segar setelah menyemprotkan produk]
                 8-10s (CTA): [Memajukan botol 60ml ke kamera dan mengangguk setuju]
 
