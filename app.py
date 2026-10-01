@@ -21,32 +21,24 @@ tab1, tab2 = st.tabs([
     "🚀 FITUR 2: Content Brain V3 Video Prompt (Flow AI)"
 ])
 
-# Fungsi pintar pemanggilan Gemini AI (Hanya menggunakan model aktif)
+# Fungsi panggil model tunggal aktif dengan auto-retry jika 503
 def generate_content_safe(client, prompt, images):
-    # Hanya gunakan model resmi yang aktif
-    models_to_try = ['gemini-3.8-flash', 'gemini-2.5-flash']
+    target_model = 'gemini-3.8-flash'
     
-    last_exception = None
-    for model_name in models_to_try:
-        for attempt in range(3):
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=[prompt] + images
-                )
-                return response.text
-            except Exception as e:
-                last_exception = e
-                err_str = str(e)
-                # Jika server sibuk (503), tunggu sebentar lalu retry
-                if "503" in err_str or "UNAVAILABLE" in err_str:
-                    time.sleep(1.5)
-                    continue
-                else:
-                    # Lanjut coba model berikutnya
-                    break
-                    
-    raise last_exception
+    # Retry hingga 3 kali khusus menangani server 503 (high demand)
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model=target_model,
+                contents=[prompt] + images
+            )
+            return response.text
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(2)  # Tunggu 2 detik sebelum coba lagi
+                continue
+            else:
+                raise e
 
 # =========================================================
 # FITUR 1: MASTER PROMPT IMAGE GENERATOR
@@ -157,7 +149,7 @@ with tab2:
     
     if st.button("🚀 Run Content Brain V3 & Generate Video Prompt", type="primary", use_container_width=True):
         if not uploaded_model_gen or not uploaded_product_botol:
-            st.warning("⚠️️ Mohon upload KEDUA FOTO (Image 1: Model Hasil Fitur 1 & Image 2: Botol NOBAU) terlebih dahulu!")
+            st.warning("⚠️ Mohon upload KEDUA FOTO (Image 1: Model Hasil Fitur 1 & Image 2: Botol NOBAU) terlebih dahulu!")
         elif not client:
             st.error("⚠️ GEMINI_API_KEY belum terpasang di Streamlit Secrets!")
         else:
