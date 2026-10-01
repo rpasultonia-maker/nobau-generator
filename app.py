@@ -1,6 +1,7 @@
 import streamlit as st
 from google import genai
 from PIL import Image
+import time
 
 st.set_page_config(
     page_title="NOBAU AI Content Generator",
@@ -20,6 +21,33 @@ tab1, tab2 = st.tabs([
     "📌 FITUR 1: Master Image Prompt (Swap Face & Style)", 
     "🚀 FITUR 2: Content Brain V3 Video Prompt (Flow AI)"
 ])
+
+# Fungsi pintar pemanggilan Gemini dengan Auto-Retry & Fallback Model
+def generate_content_safe(client, prompt, images):
+    # Urutan model yang dicoba jika server sedang high demand (503)
+    models_to_try = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
+    
+    last_exception = None
+    for model_name in models_to_try:
+        # Coba hingga 3 kali retry per model jika kena 503
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=[prompt] + images
+                )
+                return response.text
+            except Exception as e:
+                last_exception = e
+                err_str = str(e)
+                # Jika error 503 (high demand), tunggu 1.5 detik lalu coba lagi
+                if "503" in err_str or "UNAVAILABLE" in err_str:
+                    time.sleep(1.5)
+                    continue
+                else:
+                    break # Jika error lain (bukan 503), coba model berikutnya
+                    
+    raise last_exception
 
 # =========================================================
 # FITUR 1: MASTER PROMPT IMAGE GENERATOR (GEMINI VISION DYNAMIC)
@@ -91,11 +119,7 @@ with tab1:
                     FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation.
                     """
 
-                    response_f1 = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=[sys_prompt_f1, img1_pil, img2_pil]
-                    )
-                    prompt_img = response_f1.text
+                    prompt_img = generate_content_safe(client, sys_prompt_f1, [img1_pil, img2_pil])
                     st.success("✨ Master Image Prompt Generated!")
                     st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=380)
                 except Exception as e:
@@ -169,11 +193,7 @@ with tab2:
                     CONTINUITY: One continuous generation, no camera cuts, fully clothed, no face morphing, no product redesign, no trigger spray mechanism, no floating limbs, no text or graphics.
                     """
 
-                    response_f2 = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=[sys_prompt_f2, img_m_pil, img_p_pil]
-                    )
-                    prompt_vid = response_f2.text
+                    prompt_vid = generate_content_safe(client, sys_prompt_f2, [img_m_pil, img_p_pil])
                     st.success("🚀 Master Video Prompt Flow AI Generated!")
                     st.text_area("Copy-Paste Prompt Ini ke Flow AI:", value=prompt_vid, height=380)
                 except Exception as e:
