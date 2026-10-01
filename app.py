@@ -1,6 +1,7 @@
 import streamlit as st
 from google import genai
 from PIL import Image
+import time
 
 st.set_page_config(page_title="NOBAU AI Content Generator", page_icon="🧪", layout="wide")
 
@@ -16,27 +17,31 @@ tab1, tab2 = st.tabs([
     "🚀 FITUR 2: Content Brain V3 Video Prompt"
 ])
 
-def call_gemini_smart(client, prompt, images):
-    # Urutan nama model yang akan dicoba secara otomatis
-    candidates = ['gemini-3.8-flash', 'gemini-1.5-flash', 'gemini-2.0-flash']
+def call_gemini_robust(client, prompt, images):
+    # Senarai model mengikut keutamaan
+    models_to_try = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
     last_err = None
     
-    for model_id in candidates:
-        try:
-            res = client.models.generate_content(
-                model=model_id,
-                contents=[prompt] + images
-            )
-            return res.text
-        except Exception as e:
-            last_err = e
-            # Jika 404/not found, lanjut ke model berikutnya
-            if "404" in str(e) or "NOT_FOUND" in str(e) or "available" in str(e):
-                continue
-            else:
-                # Jika error selain model not found (misal 503/quota), lempar error
-                raise e
-                
+    for model_id in models_to_try:
+        # Cuba sehingga 3 kali bagi setiap model jika menerima ralat 503/server busy
+        for attempt in range(3):
+            try:
+                res = client.models.generate_content(
+                    model=model_id,
+                    contents=[prompt] + images
+                )
+                return res.text
+            except Exception as e:
+                last_err = e
+                err_msg = str(e)
+                # Jika pelayan sibuk (503/UNAVAILABLE), tunggu sebentar dan cuba lagi
+                if "503" in err_msg or "UNAVAILABLE" in err_msg or "high demand" in err_msg:
+                    time.sleep(2 * (attempt + 1))  # Tunggu 2s, kemudian 4s
+                    continue
+                else:
+                    # Jika ralat model tidak wujud (404), terus tukar ke model seterusnya
+                    break
+                    
     raise last_err
 
 # FITUR 1
@@ -72,10 +77,10 @@ with tab1:
                       ENVIRONMENT & LIGHTING: [Deskripsikan latar dari Image 1]
                       SKIN REALISM: Hyper-realistic natural skin texture, visible pores, raw photograph, shot on iPhone front camera, 8k resolution, UGC aesthetic --ar 9:16 --cw 100
                     """
-                    prompt_out = call_gemini_smart(client, sys_f1, [Image.open(up_style), Image.open(up_face)])
+                    prompt_out = call_gemini_robust(client, sys_f1, [Image.open(up_style), Image.open(up_face)])
                     st.text_area("Master Image Prompt (Midjourney / Flux):", value=prompt_out, height=380)
                 except Exception as e:
-                    st.error(f"Error API: {e}")
+                    st.error(f"Gagal memanggil Gemini API: Pelayan sibuk atau ralat API ({e})")
 
 # FITUR 2
 with tab2:
@@ -103,7 +108,7 @@ with tab2:
                     - TIMELINE (0-10s): 0-3s Hook masalah bau yang relevan, 3-6s Action spray, 6-8s Payoff segar, 8-10s CTA.
                     - DIALOGUE: 1 kalimat Bahasa Indonesia yang catchy & relevan dengan varian produk di Image 2.
                     """
-                    prompt_out = call_gemini_smart(client, sys_f2, [Image.open(up_model), Image.open(up_prod)])
+                    prompt_out = call_gemini_robust(client, sys_f2, [Image.open(up_model), Image.open(up_prod)])
                     st.text_area("Video Prompt Flow AI:", value=prompt_out, height=380)
                 except Exception as e:
-                    st.error(f"Error API: {e}")
+                    st.error(f"Gagal memanggil Gemini API: Pelayan sibuk atau ralat API ({e})")
