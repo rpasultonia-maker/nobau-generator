@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 from PIL import Image
 
 st.set_page_config(
@@ -11,34 +11,18 @@ st.set_page_config(
 st.title("🧪 NOBAU AI Content Brain & Prompt Studio")
 st.caption("Automation Studio for Scale 1.000 Affiliate UGC Videos")
 
-# Konfigurasi Gemini API Key dari Secrets Streamlit Cloud
+# Inisialisasi Client Gemini dari Secrets Streamlit Cloud
+client = None
 if "GEMINI_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 tab1, tab2 = st.tabs([
     "📌 FITUR 1: Master Image Prompt (Swap Face & Style)", 
     "🚀 FITUR 2: Content Brain V3 Video Prompt (Flow AI)"
 ])
 
-# Fungsi Helper untuk pemanggilan Model Gemini yang Valid
-def call_gemini_vision(prompt, images):
-    # Urutan model resmi terbaru
-    available_models = ['gemini-2.5-flash', 'gemini-1.5-flash']
-    last_err = None
-    
-    for m_name in available_models:
-        try:
-            model = genai.GenerativeModel(m_name)
-            response = model.generate_content([prompt] + images)
-            return response.text
-        except Exception as e:
-            last_err = e
-            continue
-            
-    raise last_err
-
 # =========================================================
-# FITUR 1: MASTER PROMPT IMAGE GENERATOR (VISION DYNAMIC)
+# FITUR 1: MASTER PROMPT IMAGE GENERATOR (GEMINI VISION DYNAMIC)
 # =========================================================
 with tab1:
     st.header("📌 Fitur 1: Generate Master Image Prompt")
@@ -71,6 +55,8 @@ with tab1:
     if st.button("📌 Generate Master Prompt Image", type="secondary", use_container_width=True):
         if not uploaded_style or not uploaded_face:
             st.warning("⚠️ Mohon upload KEDUA FOTO (Image 1: Referensi Style & Image 2: Wajah Karakter) terlebih dahulu!")
+        elif not client:
+            st.error("⚠️ GEMINI_API_KEY belum terpasang di Streamlit Secrets!")
         else:
             with st.spinner("🤖 Gemini Vision sedang menganalisis pose, outfit, lighting & lingkungan Image 1..."):
                 try:
@@ -105,11 +91,15 @@ with tab1:
                     FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation.
                     """
 
-                    prompt_img = call_gemini_vision(sys_prompt_f1, [img1_pil, img2_pil])
+                    response_f1 = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=[sys_prompt_f1, img1_pil, img2_pil]
+                    )
+                    prompt_img = response_f1.text
                     st.success("✨ Master Image Prompt Generated!")
                     st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=380)
                 except Exception as e:
-                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah terpasang di Secrets.")
+                    st.error(f"Gagal memanggil Gemini API: {e}")
 
 # =========================================================
 # FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR (GEMINI VISION DYNAMIC)
@@ -145,6 +135,8 @@ with tab2:
     if st.button("🚀 Run Content Brain V3 & Generate Video Prompt", type="primary", use_container_width=True):
         if not uploaded_model_gen or not uploaded_product_botol:
             st.warning("⚠️ Mohon upload KEDUA FOTO (Image 1: Model Hasil Fitur 1 & Image 2: Botol NOBAU) terlebih dahulu!")
+        elif not client:
+            st.error("⚠️ GEMINI_API_KEY belum terpasang di Streamlit Secrets!")
         else:
             with st.spinner("🤖 Gemini Vision sedang meriset settingan, varian produk & ide hook real-time..."):
                 try:
@@ -177,8 +169,12 @@ with tab2:
                     CONTINUITY: One continuous generation, no camera cuts, fully clothed, no face morphing, no product redesign, no trigger spray mechanism, no floating limbs, no text or graphics.
                     """
 
-                    prompt_vid = call_gemini_vision(sys_prompt_f2, [img_m_pil, img_p_pil])
+                    response_f2 = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=[sys_prompt_f2, img_m_pil, img_p_pil]
+                    )
+                    prompt_vid = response_f2.text
                     st.success("🚀 Master Video Prompt Flow AI Generated!")
                     st.text_area("Copy-Paste Prompt Ini ke Flow AI:", value=prompt_vid, height=380)
                 except Exception as e:
-                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah terpasang di Secrets.")
+                    st.error(f"Gagal memanggil Gemini API: {e}")
