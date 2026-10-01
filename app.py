@@ -20,6 +20,24 @@ tab1, tab2 = st.tabs([
     "🚀 FITUR 2: Content Brain V3 Video Prompt (Flow AI)"
 ])
 
+# Fungsi helper untuk memanggil Gemini AI dengan fallback model jika 404
+def generate_with_gemini(prompt, images):
+    # Coba model-model yang valid secara berurutan
+    models_to_try = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash']
+    last_error = None
+    
+    for model_name in models_to_try:
+        try:
+            model = genai.GenerativeModel(model_name)
+            contents = [prompt] + images
+            response = model.generate_content(contents)
+            return response.text
+        except Exception as e:
+            last_error = e
+            continue
+            
+    raise last_error
+
 # =========================================================
 # FITUR 1: MASTER PROMPT IMAGE GENERATOR (GEMINI VISION DYNAMIC)
 # =========================================================
@@ -57,7 +75,6 @@ with tab1:
         else:
             with st.spinner("🤖 Gemini Vision sedang menganalisis pose, outfit, lighting & lingkungan Image 1..."):
                 try:
-                    model = genai.GenerativeModel('gemini-1.5-flash')
                     img1_pil = Image.open(uploaded_style)
                     img2_pil = Image.open(uploaded_face)
 
@@ -89,14 +106,11 @@ with tab1:
                     FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation.
                     """
 
-                    response_f1 = model.generate_content([sys_prompt_f1, img1_pil, img2_pil])
-                    prompt_img = response_f1.text
+                    prompt_img = generate_with_gemini(sys_prompt_f1, [img1_pil, img2_pil])
+                    st.success("✨ Master Image Prompt Generated!")
+                    st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=380)
                 except Exception as e:
-                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah dipasang di Streamlit Secrets.")
-                    prompt_img = "Error generating prompt via Gemini AI API."
-
-            st.success("✨ Master Image Prompt Generated!")
-            st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=380)
+                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah dipasang dengan benar di Streamlit Secrets.")
 
 # =========================================================
 # FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR (GEMINI VISION DYNAMIC)
@@ -135,7 +149,6 @@ with tab2:
         else:
             with st.spinner("🤖 Gemini Vision sedang meriset settingan, varian produk & ide hook real-time..."):
                 try:
-                    model = genai.GenerativeModel('gemini-1.5-flash')
                     img_m_pil = Image.open(uploaded_model_gen)
                     img_p_pil = Image.open(uploaded_product_botol)
 
@@ -165,11 +178,8 @@ with tab2:
                     CONTINUITY: One continuous generation, no camera cuts, fully clothed, no face morphing, no product redesign, no trigger spray mechanism, no floating limbs, no text or graphics.
                     """
 
-                    response_f2 = model.generate_content([sys_prompt_f2, img_m_pil, img_p_pil])
-                    prompt_vid = response_f2.text
+                    prompt_vid = generate_with_gemini(sys_prompt_f2, [img_m_pil, img_p_pil])
+                    st.success("🚀 Master Video Prompt Flow AI Generated!")
+                    st.text_area("Copy-Paste Prompt Ini ke Flow AI:", value=prompt_vid, height=380)
                 except Exception as e:
-                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah dipasang di Streamlit Secrets.")
-                    prompt_vid = "Error generating prompt via Gemini AI API."
-
-            st.success("🚀 Master Video Prompt Flow AI Generated!")
-            st.text_area("Copy-Paste Prompt Ini ke Flow AI:", value=prompt_vid, height=380)
+                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah dipasang dengan benar di Streamlit Secrets.")
