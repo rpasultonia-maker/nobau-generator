@@ -1,4 +1,6 @@
 import streamlit as st
+import google.generativeai as genai
+from PIL import Image
 
 st.set_page_config(
     page_title="NOBAU AI Content Generator",
@@ -9,17 +11,21 @@ st.set_page_config(
 st.title("🧪 NOBAU AI Content Brain & Prompt Studio")
 st.caption("Automation Studio for Scale 1.000 Affiliate UGC Videos")
 
+# Konfigurasi Gemini API Key dari Secrets Streamlit Cloud
+if "GEMINI_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
 tab1, tab2 = st.tabs([
     "📌 FITUR 1: Master Image Prompt (Swap Face & Style)", 
     "🚀 FITUR 2: Content Brain V3 Video Prompt (Flow AI)"
 ])
 
 # =========================================================
-# FITUR 1: MASTER PROMPT IMAGE GENERATOR
+# FITUR 1: MASTER PROMPT IMAGE GENERATOR (GEMINI VISION DYNAMIC)
 # =========================================================
 with tab1:
     st.header("📌 Fitur 1: Generate Master Image Prompt")
-    st.write("Upload Foto Referensi Pose/Style & Foto Wajah Karakter NOBAU:")
+    st.write("Upload Foto Referensi Style/Pose & Foto Wajah Karakter NOBAU:")
     
     col_f1_1, col_f1_2 = st.columns(2)
     
@@ -49,32 +55,51 @@ with tab1:
         if not uploaded_style or not uploaded_face:
             st.warning("⚠️ Mohon upload KEDUA FOTO (Image 1: Referensi Style & Image 2: Wajah Karakter) terlebih dahulu!")
         else:
-            prompt_img = """Create a natural smartphone selfie photograph based on the uploaded reference images.
+            with st.spinner("🤖 Gemini Vision sedang menganalisis pose, outfit, lighting & lingkungan Image 1..."):
+                try:
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    img1_pil = Image.open(uploaded_style)
+                    img2_pil = Image.open(uploaded_face)
 
-REFERENCE IMAGE ROLE:
-Use Image 1 strictly for composition, camera perspective, body pose, clothing style, background environment, lighting, and casual smartphone photography aesthetic.
+                    sys_prompt_f1 = """
+                    Analisis Image 1 (Referensi Style & Pose) dan Image 2 (Identitas Wajah NOBAU).
+                    Tugasmu adalah menghasilkan Master Image Prompt baku sesuai format persis di bawah ini.
+                    Isi detail POSE, FACIAL EXPRESSION, CLOTHING, ENVIRONMENT, LIGHTING, CAMERA secara SANGAT SPESIFIK dan AKURAT berdasarkan elemen visual asli yang kamu lihat di Image 1!
 
-FACE IDENTITY — CRITICAL:
-The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve facial structure, eyes, nose, lips, jawline, skin tone. Do NOT blend faces.
+                    FORMAT OUTPUT (WAJIB DIIKUTI):
+                    Create a natural smartphone selfie photograph based on the uploaded reference images.
 
-SUBJECT: A young Indonesian woman taking a casual smartphone selfie.
-POSE: Seated in the car's driver seat with legs angled sideways, resting left cheek against the left hand, and right hand resting in the lap holding sunglasses.
-FACIAL EXPRESSION: Natural relaxed feminine expression with a subtle soft smile, playful and confident.
-HAIR: Preserve NOBAU model's recognizable hairstyle from Image 2: voluminous, layered dark brown hair with bouncy curls and soft face-framing fringe.
-CLOTHING: Black short-sleeved top or mini-dress with gold button accents, accessorized with a metallic silver watch on the left wrist.
-ENVIRONMENT: Modern car cabin interior featuring black leather seating, steering wheel, and an expansive panoramic glass sunroof revealing green foliage and sky above.
-CAMERA: Authentic smartphone front-camera selfie perspective, high-angle, 24–28mm equivalent.
-LIGHTING: Cool-toned natural daylight softly diffusing through the overhead panoramic glass roof and car windows.
-SKIN & REALISM: Natural realistic skin texture, pores, subtle imperfections, no plastic skin, no heavy beauty filters.
-PHOTOGRAPHIC STYLE: Authentic Indonesian social-media selfie aesthetic, casual handheld photo.
-IDENTITY PRIORITY: Image 2 = Identity & Face. Image 1 = Pose, Outfit, Scene, & Style.
-FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation."""
+                    REFERENCE IMAGE ROLE:
+                    Use Image 1 strictly for composition, camera perspective, body pose, clothing style, background environment, lighting, and casual smartphone photography aesthetic.
+
+                    FACE IDENTITY — CRITICAL:
+                    The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve facial structure, eyes, nose, lips, jawline, skin tone. Do NOT blend faces.
+
+                    SUBJECT: A young Indonesian woman taking a casual smartphone selfie.
+                    POSE: [Deskripsikan pose tangan, posisi tubuh, dan gesture dari Image 1 secara presisi]
+                    FACIAL EXPRESSION: [Deskripsikan ekspresi wajah dari Image 1]
+                    HAIR: Preserve NOBAU model's recognizable hairstyle from Image 2: voluminous, layered dark brown hair with bouncy curls and soft face-framing fringe.
+                    CLOTHING: [Deskripsikan pakaian, warna, bahan, serta aksesori seperti kalung/jam tangan dari Image 1 secara presisi]
+                    ENVIRONMENT: [Deskripsikan ruangan/latar belakang dari Image 1 secara presisi]
+                    CAMERA: Authentic smartphone front-camera selfie perspective, high-angle/eye-level.
+                    LIGHTING: [Deskripsikan pencahayaan dari Image 1]
+                    SKIN & REALISM: Natural realistic skin texture, pores, subtle imperfections, no plastic skin, no heavy beauty filters.
+                    PHOTOGRAPHIC STYLE: Authentic Indonesian social-media selfie aesthetic, casual handheld photo.
+                    IDENTITY PRIORITY: Image 2 = Identity & Face. Image 1 = Pose, Outfit, Scene, & Style.
+                    FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation.
+                    """
+
+                    response_f1 = model.generate_content([sys_prompt_f1, img1_pil, img2_pil])
+                    prompt_img = response_f1.text
+                except Exception as e:
+                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah dipasang di Streamlit Secrets.")
+                    prompt_img = "Error generating prompt via Gemini AI API."
 
             st.success("✨ Master Image Prompt Generated!")
-            st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=350)
+            st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=380)
 
 # =========================================================
-# FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR
+# FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR (GEMINI VISION DYNAMIC)
 # =========================================================
 with tab2:
     st.header("🚀 Fitur 2: Content Brain V3 & Video Prompt Generator")
@@ -108,24 +133,43 @@ with tab2:
         if not uploaded_model_gen or not uploaded_product_botol:
             st.warning("⚠️ Mohon upload KEDUA FOTO (Image 1: Model Hasil Fitur 1 & Image 2: Botol NOBAU) terlebih dahulu!")
         else:
-            prompt_vid = """A continuous 10-second vertical 9:16 smartphone UGC video recorded inside a modern car cabin with a glass panoramic sunroof, matching the exact setting of Image 1.
+            with st.spinner("🤖 Gemini Vision sedang meriset settingan, varian produk & ide hook real-time..."):
+                try:
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    img_m_pil = Image.open(uploaded_model_gen)
+                    img_p_pil = Image.open(uploaded_product_botol)
 
-IDENTITY: Preserve exact facial structure, identity, long dark wavy brown hair, fair skin tone, dark short-sleeved top with gold side buttons, silver wristwatch, and natural makeup matching Image 1.
+                    sys_prompt_f2 = """
+                    Analisis Image 1 (Model) dan Image 2 (Botol Produk NOBAU).
+                    Tugasmu adalah meriset visualnya lalu menghasilkan Master Video Prompt UGC 10 detik sesuai format baku berikut.
+                    Isi detail SETTING, OUTFIT, VARIANT LABEL PRODUK, DYNAMIC HOOK (0-3s), ACTION (3-6s), PAYOFF (6-8s), CTA (8-10s), dan DIALOGUE Bahasa Indonesia secara OTOMATIS & RELEVAN berdasarkan produk & latar di Image 1 & Image 2!
 
-PRODUCT: Holding the exact compact travel-size 60ml NOBAU spray bottle as visually defined in Image 2. The bottle is small and fits comfortably within a single palm, matching realistic 60ml bottle scale relative to her hand. White cylindrical bottle with a semi-translucent mist pump cap, clear label "NOBAU DeoFresh PENGHILANG BAU ROKOK", yellow-orange background accents, and "WITH ESSENTIAL OIL" badge.
+                    FORMAT OUTPUT (WAJIB DIIKUTI):
+                    A continuous 10-second vertical 9:16 smartphone UGC video recorded inside [Deskripsikan lokasi/latar dari Image 1 secara presisi], matching the exact setting of Image 1.
 
-STORY & TIMELINE (0-10s):
-0-3s (HOOK): Creator sits in the driver's seat, winces with a annoyed expression, fanning the air near her face with one hand as if reacting to strong lingering cigarette smoke in the car cabin.
-3-6s (ACTION): Picks up the compact 60ml NOBAU bottle from the center console, holding it naturally in one palm, and sprays 2 quick mists into the car cabin air while speaking directly to the selfie camera.
-6-8s (PAYOFF): Takes a deep breath, smiles with instant relief, gesturing how quickly the fresh essential oil aroma neutralizes the smoke smell.
-8-10s (CTA): Holds the small 60ml NOBAU bottle forward at chest level toward the camera lens, nodding approvingly.
+                    IDENTITY: Preserve exact facial structure, identity, hair style, skin tone, [Deskripsikan outfit dan aksesori dari Image 1 secara presisi], and natural makeup matching Image 1.
 
-DIALOGUE (Spoken natively in conversational Indonesian, EXACTLY):
-"Habis ngerokok di mobil tapi mau jemput doi? Semprot NOBAU Penghilang Bau Rokok, bau apek langsung hilang seketika!"
+                    PRODUCT: Holding the exact compact travel-size 60ml NOBAU spray bottle as visually defined in Image 2. The bottle is small and fits comfortably within a single palm, matching realistic 60ml bottle scale relative to her hand. [Deskripsikan detail visual label, warna, teks varian produk NOBAU dari Image 2 secara presisi].
 
-CAMERA & STYLE: Authentic Indonesian TikTok creator aesthetic, natural handheld camera shake, soft natural daylight entering through the panoramic sunroof, casual front-facing selfie camera angle.
+                    STORY & TIMELINE (0-10s):
+                    0-3s (HOOK): [Buatkan ide hook visual & reaksi masalah bau yang relevan dengan varian produk/latar dari Image 1 & Image 2]
+                    3-6s (ACTION): [Aksi mengambil produk, memegang di telapak tangan, menyemprotkan produk sambil bicara ke kamera]
+                    6-8s (PAYOFF): [Reaksi lega/segar setelah menyemprotkan produk]
+                    8-10s (CTA): [Memajukan botol 60ml ke kamera dan mengangguk setuju]
 
-CONTINUITY: One continuous generation, no camera cuts, fully clothed, no face morphing, no product redesign, no trigger spray mechanism, no floating limbs, no text or graphics."""
+                    DIALOGUE (Spoken natively in conversational Indonesian, EXACTLY):
+                    "[Buatkan 1 kalimat dialogue UGC singkat, natural, catchy dalam Bahasa Indonesia yang langsung relevan dengan varian produk di Image 2]"
+
+                    CAMERA & STYLE: Authentic Indonesian TikTok creator aesthetic, natural handheld camera shake, soft natural daylight, casual front-facing selfie camera angle.
+
+                    CONTINUITY: One continuous generation, no camera cuts, fully clothed, no face morphing, no product redesign, no trigger spray mechanism, no floating limbs, no text or graphics.
+                    """
+
+                    response_f2 = model.generate_content([sys_prompt_f2, img_m_pil, img_p_pil])
+                    prompt_vid = response_f2.text
+                except Exception as e:
+                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah dipasang di Streamlit Secrets.")
+                    prompt_vid = "Error generating prompt via Gemini AI API."
 
             st.success("🚀 Master Video Prompt Flow AI Generated!")
             st.text_area("Copy-Paste Prompt Ini ke Flow AI:", value=prompt_vid, height=380)
