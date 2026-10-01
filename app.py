@@ -5,8 +5,8 @@ from PIL import Image
 st.set_page_config(page_title="NOBAU AI Content Generator", page_icon="🧪", layout="wide")
 
 st.title("🧪 NOBAU AI Content Brain & Prompt Studio")
+st.caption("Automation Studio for Scale 1.000 Affiliate UGC Videos")
 
-# Inisialisasi SDK baru
 client = None
 if "GEMINI_API_KEY" in st.secrets:
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
@@ -15,6 +15,29 @@ tab1, tab2 = st.tabs([
     "📌 FITUR 1: Master Image Prompt", 
     "🚀 FITUR 2: Content Brain V3 Video Prompt"
 ])
+
+def call_gemini_smart(client, prompt, images):
+    # Urutan nama model yang akan dicoba secara otomatis
+    candidates = ['gemini-3.8-flash', 'gemini-1.5-flash', 'gemini-2.0-flash']
+    last_err = None
+    
+    for model_id in candidates:
+        try:
+            res = client.models.generate_content(
+                model=model_id,
+                contents=[prompt] + images
+            )
+            return res.text
+        except Exception as e:
+            last_err = e
+            # Jika 404/not found, lanjut ke model berikutnya
+            if "404" in str(e) or "NOT_FOUND" in str(e) or "available" in str(e):
+                continue
+            else:
+                # Jika error selain model not found (misal 503/quota), lempar error
+                raise e
+                
+    raise last_err
 
 # FITUR 1
 with tab1:
@@ -32,20 +55,25 @@ with tab1:
         elif not client:
             st.error("API Key belum terpasang!")
         else:
-            with st.spinner("Menganalisis gambar..."):
+            with st.spinner("Menganalisis mikro-detail wajah & pose..."):
                 try:
                     sys_f1 = """
-                    Analisis Image 1 (Style/Pose) & Image 2 (Wajah NOBAU).
+                    Analisis Image 1 (Style & Pose) dan Image 2 (Identitas Wajah Karakter NOBAU).
                     Hasilkan Master Image Prompt baku:
-                    - Gunakan Image 1 HANYA untuk pose, outfit, lighting, dan environment.
-                    - Gunakan Image 2 HANYA untuk identitas wajah (Zero-Morphing).
-                    - Format: Photorealistic selfie, detail wajah Image 2, pose & outfit Image 1, 8k resolution, UGC aesthetic --ar 9:16 --cw 100.
+                    - Bedah Image 2 untuk detail spesifik wajah (mata, alis, hidung, bibir, rahang, skin tone).
+                    - Bedah Image 1 HANYA untuk composition, pose, outfit, environment, dan lighting.
+                    - Format output:
+                      Create a natural photorealistic smartphone selfie based on the uploaded reference images.
+                      REFERENCE IMAGE ROLE: Image 1 = Pose, outfit, lighting, background. Image 2 = Face & Head identity ONLY.
+                      FACE IDENTITY: Replace the head and face in Image 1 entirely with Image 2's exact identity. Zero morphing/blending.
+                      EXACT FACE DETAILS FROM IMAGE 2: [Uraikan detail fisik wajah dari Image 2]
+                      SUBJECT & POSE: [Deskripsikan pose dari Image 1]
+                      CLOTHING & ACCESSORIES: [Deskripsikan pakaian & aksesori dari Image 1]
+                      ENVIRONMENT & LIGHTING: [Deskripsikan latar dari Image 1]
+                      SKIN REALISM: Hyper-realistic natural skin texture, visible pores, raw photograph, shot on iPhone front camera, 8k resolution, UGC aesthetic --ar 9:16 --cw 100
                     """
-                    res = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=[sys_f1, Image.open(up_style), Image.open(up_face)]
-                    )
-                    st.text_area("Master Image Prompt:", value=res.text, height=350)
+                    prompt_out = call_gemini_smart(client, sys_f1, [Image.open(up_style), Image.open(up_face)])
+                    st.text_area("Master Image Prompt (Midjourney / Flux):", value=prompt_out, height=380)
                 except Exception as e:
                     st.error(f"Error API: {e}")
 
@@ -65,20 +93,17 @@ with tab2:
         elif not client:
             st.error("API Key belum terpasang!")
         else:
-            with st.spinner("Menganalisis gambar..."):
+            with st.spinner("Menganalisis latar, produk & meriset hook..."):
                 try:
                     sys_f2 = """
-                    Analisis Image 1 (Model) & Image 2 (Botol NOBAU).
-                    Hasilkan Master Video Prompt Flow AI 10s:
-                    - Latar & Outfit dari Image 1.
-                    - Produk 60ml dari Image 2.
-                    - Timeline: 0-3s Hook masalah bau, 3-6s Action spray, 6-8s Payoff, 8-10s CTA.
-                    - Sertakan 1 kalimat Dialogue Bahasa Indonesia yang relevan.
+                    Analisis Image 1 (Model) dan Image 2 (Botol Produk NOBAU 60ml).
+                    Hasilkan Master Video Prompt Flow AI 10 detik:
+                    - SETTING & OUTFIT: Ekstrak dari Image 1.
+                    - PRODUCT: Botol 60ml travel-size dari Image 2.
+                    - TIMELINE (0-10s): 0-3s Hook masalah bau yang relevan, 3-6s Action spray, 6-8s Payoff segar, 8-10s CTA.
+                    - DIALOGUE: 1 kalimat Bahasa Indonesia yang catchy & relevan dengan varian produk di Image 2.
                     """
-                    res = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=[sys_f2, Image.open(up_model), Image.open(up_prod)]
-                    )
-                    st.text_area("Video Prompt Flow AI:", value=res.text, height=350)
+                    prompt_out = call_gemini_smart(client, sys_f2, [Image.open(up_model), Image.open(up_prod)])
+                    st.text_area("Video Prompt Flow AI:", value=prompt_out, height=380)
                 except Exception as e:
                     st.error(f"Error API: {e}")
