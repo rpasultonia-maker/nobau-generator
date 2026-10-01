@@ -3,127 +3,176 @@ from google import genai
 from PIL import Image
 import time
 
-st.set_page_config(page_title="NOBAU AI Content Generator", page_icon="🧪", layout="wide")
+st.set_page_config(
+    page_title="NOBAU AI Content Generator",
+    page_icon="🧪",
+    layout="wide"
+)
 
 st.title("🧪 NOBAU AI Content Brain & Prompt Studio")
 st.caption("Automation Studio for Scale 1.000 Affiliate UGC Videos")
 
+# Inisialisasi Client Gemini dari Secrets Streamlit Cloud
 client = None
 if "GEMINI_API_KEY" in st.secrets:
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 tab1, tab2 = st.tabs([
-    "📌 FITUR 1: Master Image Prompt", 
-    "🚀 FITUR 2: Content Brain V3 Video Prompt"
+    "📌 FITUR 1: Master Image Prompt (Swap Face & Style)", 
+    "🚀 FITUR 2: Content Brain V3 Video Prompt (Flow AI)"
 ])
 
-def call_gemini_robust(client, prompt, images):
+# Fungsi pintar pemanggilan Gemini dengan Auto-Retry & Fallback Model
+def generate_content_safe(client, prompt, images):
+    # Urutan model yang dicoba jika server sedang high demand (503)
     models_to_try = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
-    last_err = None
     
-    for model_id in models_to_try:
+    last_exception = None
+    for model_name in models_to_try:
+        # Coba hingga 3 kali retry per model jika kena 503
         for attempt in range(3):
             try:
-                res = client.models.generate_content(
-                    model=model_id,
+                response = client.models.generate_content(
+                    model=model_name,
                     contents=[prompt] + images
                 )
-                return res.text
+                return response.text
             except Exception as e:
-                last_err = e
-                err_msg = str(e)
-                if "503" in err_msg or "UNAVAILABLE" in err_msg or "high demand" in err_msg:
-                    time.sleep(2 * (attempt + 1))
+                last_exception = e
+                err_str = str(e)
+                # Jika error 503 (high demand), tunggu 1.5 detik lalu coba lagi
+                if "503" in err_str or "UNAVAILABLE" in err_str:
+                    time.sleep(1.5)
                     continue
                 else:
-                    break
+                    break # Jika error lain (bukan 503), coba model berikutnya
                     
-    raise last_err
+    raise last_exception
 
 # =========================================================
-# FITUR 1: MASTER PROMPT IMAGE GENERATOR
+# FITUR 1: MASTER PROMPT IMAGE GENERATOR (GEMINI VISION DYNAMIC)
 # =========================================================
 with tab1:
-    col1, col2 = st.columns(2)
-    with col1:
-        up_style = st.file_uploader("Upload Style/Pose (Image 1)", type=["jpg", "png"], key="s1")
-        if up_style: st.image(up_style, use_container_width=True)
-    with col2:
-        up_face = st.file_uploader("Upload Wajah NOBAU (Image 2)", type=["jpg", "png"], key="f1")
-        if up_face: st.image(up_face, use_container_width=True)
+    st.header("📌 Fitur 1: Generate Master Image Prompt")
+    st.write("Upload Foto Referensi Style/Pose & Foto Wajah Karakter NOBAU:")
+    
+    col_f1_1, col_f1_2 = st.columns(2)
+    
+    with col_f1_1:
+        st.subheader("1. Referensi Pose / Outfit / Style (Image 1)")
+        uploaded_style = st.file_uploader(
+            "Upload Foto Referensi Style & Pose", 
+            type=["jpg", "jpeg", "png"], 
+            key="style_ref"
+        )
+        if uploaded_style:
+            st.image(uploaded_style, use_container_width=True)
+            
+    with col_f1_2:
+        st.subheader("2. Identitas Wajah Karakter NOBAU (Image 2)")
+        uploaded_face = st.file_uploader(
+            "Upload Foto Wajah / Karakter NOBAU", 
+            type=["jpg", "jpeg", "png"], 
+            key="face_input"
+        )
+        if uploaded_face:
+            st.image(uploaded_face, use_container_width=True)
         
     st.divider()
-        
-    if st.button("📌 Generate Master Prompt Image", use_container_width=True):
-        if not up_style or not up_face:
-            st.warning("Mohon upload kedua foto!")
+    
+    if st.button("📌 Generate Master Prompt Image", type="secondary", use_container_width=True):
+        if not uploaded_style or not uploaded_face:
+            st.warning("⚠️ Mohon upload KEDUA FOTO (Image 1: Referensi Style & Image 2: Wajah Karakter) terlebih dahulu!")
         elif not client:
-            st.error("API Key belum terpasang!")
+            st.error("⚠️ GEMINI_API_KEY belum terpasang di Streamlit Secrets!")
         else:
-            with st.spinner("Menganalisis foto & mengekstrak ciri wajah Image 2..."):
+            with st.spinner("🤖 Gemini Vision sedang menganalisis pose, outfit, lighting & lingkungan Image 1..."):
                 try:
-                    sys_f1 = """
-                    Analisis Image 1 (Referensi Style/Pose) dan Image 2 (Karakter Wajah NOBAU).
-                    Hasilkan Master Image Prompt dalam format BAKU ASAL berikut TANPA MENGUBAH STRUKTUR UTAMA.
-                    Isi bahagian dalam tanda kurung siku [...] berdasarkan hasil analisis visual Image 1 & Image 2 secara tepat.
+                    img1_pil = Image.open(uploaded_style)
+                    img2_pil = Image.open(uploaded_face)
 
-                    FORMAT OUTPUT (WAJIB PATUHI STRUKTUR ASAL KETAT INI):
+                    sys_prompt_f1 = """
+                    Analisis Image 1 (Referensi Style & Pose) dan Image 2 (Identitas Wajah NOBAU).
+                    Tugasmu adalah menghasilkan Master Image Prompt baku sesuai format persis di bawah ini.
+                    Isi detail POSE, FACIAL EXPRESSION, CLOTHING, ENVIRONMENT, LIGHTING, CAMERA secara SANGAT SPESIFIK dan AKURAT berdasarkan elemen visual asli yang kamu lihat di Image 1!
+
+                    FORMAT OUTPUT (WAJIB DIIKUTI):
                     Create a natural smartphone selfie photograph based on the uploaded reference images.
 
                     REFERENCE IMAGE ROLE:
                     Use Image 1 strictly for composition, camera perspective, body pose, clothing style, background environment, lighting, and casual smartphone photography aesthetic.
 
                     FACE IDENTITY — CRITICAL:
-                    The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve exact facial structure, eye shape, nose bridge, lips, jawline contour, and skin tone from Image 2. Do NOT blend, morph, or mix faces with Image 1.
-                    MICRO FACE DETAILS FROM IMAGE 2: [Analisis dan jelaskan secara terperinci ciri fizikal unik wajah dari Image 2]
+                    The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve facial structure, eyes, nose, lips, jawline, skin tone. Do NOT blend faces.
 
                     SUBJECT: A young Indonesian woman taking a casual smartphone selfie.
                     POSE: [Deskripsikan pose tangan, posisi tubuh, dan gesture dari Image 1 secara presisi]
                     FACIAL EXPRESSION: [Deskripsikan ekspresi wajah dari Image 1]
-                    HAIR: Preserve NOBAU model's recognizable hairstyle from Image 2: [Deskripsikan gaya/warna rambut dari Image 2 secara presisi].
+                    HAIR: Preserve NOBAU model's recognizable hairstyle from Image 2: voluminous, layered dark brown hair with bouncy curls and soft face-framing fringe.
                     CLOTHING: [Deskripsikan pakaian, warna, bahan, serta aksesori seperti kalung/jam tangan dari Image 1 secara presisi]
                     ENVIRONMENT: [Deskripsikan ruangan/latar belakang dari Image 1 secara presisi]
                     CAMERA: Authentic smartphone front-camera selfie perspective, high-angle/eye-level.
-                    LIGHTING: [Deskripsikan pencahayaan dari Image 1 secara presisi]
+                    LIGHTING: [Deskripsikan pencahayaan dari Image 1]
                     SKIN & REALISM: Natural realistic skin texture, pores, subtle imperfections, no plastic skin, no heavy beauty filters.
                     PHOTOGRAPHIC STYLE: Authentic Indonesian social-media selfie aesthetic, casual handheld photo.
                     IDENTITY PRIORITY: Image 2 = Identity & Face. Image 1 = Pose, Outfit, Scene, & Style.
-                    FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation. --ar 9:16 --cw 100
+                    FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation.
                     """
-                    prompt_out = call_gemini_robust(client, sys_f1, [Image.open(up_style), Image.open(up_face)])
+
+                    prompt_img = generate_content_safe(client, sys_prompt_f1, [img1_pil, img2_pil])
                     st.success("✨ Master Image Prompt Generated!")
-                    st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_out, height=380)
+                    st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=380)
                 except Exception as e:
                     st.error(f"Gagal memanggil Gemini API: {e}")
 
 # =========================================================
-# FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR
+# FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR (GEMINI VISION DYNAMIC)
 # =========================================================
 with tab2:
-    col1, col2 = st.columns(2)
-    with col1:
-        up_model = st.file_uploader("Upload Model Hasil Fitur 1 (Image 1)", type=["jpg", "png"], key="m2")
-        if up_model: st.image(up_model, use_container_width=True)
-    with col2:
-        up_prod = st.file_uploader("Upload Botol NOBAU 60ml (Image 2)", type=["jpg", "png"], key="p2")
-        if up_prod: st.image(up_prod, use_container_width=True)
-        
+    st.header("🚀 Fitur 2: Content Brain V3 & Video Prompt Generator")
+    st.write("Upload Foto Model Hasil Fitur 1 & Foto Produk Botol NOBAU:")
+    
+    col_v1, col_v2 = st.columns(2)
+    
+    with col_v1:
+        st.subheader("1. Foto Model (Hasil Fitur 1 / Image 1)")
+        uploaded_model_gen = st.file_uploader(
+            "Upload Foto Model Hasil Fitur 1", 
+            type=["jpg", "jpeg", "png"], 
+            key="model_gen"
+        )
+        if uploaded_model_gen:
+            st.image(uploaded_model_gen, use_container_width=True)
+            
+    with col_v2:
+        st.subheader("2. Foto Produk Botol NOBAU (Image 2)")
+        uploaded_product_botol = st.file_uploader(
+            "Upload Foto Produk Botol NOBAU", 
+            type=["jpg", "jpeg", "png"], 
+            key="product_botol"
+        )
+        if uploaded_product_botol:
+            st.image(uploaded_product_botol, use_container_width=True)
+            
     st.divider()
-        
-    if st.button("🚀 Run Content Brain V3 & Generate Video Prompt", use_container_width=True, type="primary"):
-        if not up_model or not up_prod:
-            st.warning("Mohon upload kedua foto!")
+    
+    if st.button("🚀 Run Content Brain V3 & Generate Video Prompt", type="primary", use_container_width=True):
+        if not uploaded_model_gen or not uploaded_product_botol:
+            st.warning("⚠️ Mohon upload KEDUA FOTO (Image 1: Model Hasil Fitur 1 & Image 2: Botol NOBAU) terlebih dahulu!")
         elif not client:
-            st.error("API Key belum terpasang!")
+            st.error("⚠️ GEMINI_API_KEY belum terpasang di Streamlit Secrets!")
         else:
-            with st.spinner("Menganalisis latar, produk & meriset hook real-time..."):
+            with st.spinner("🤖 Gemini Vision sedang meriset settingan, varian produk & ide hook real-time..."):
                 try:
-                    sys_f2 = """
-                    Analisis Image 1 (Model Hasil Fitur 1) dan Image 2 (Botol Produk NOBAU 60ml).
-                    Hasilkan Master Video Prompt UGC 10 detik mengikut FORMAT BAKU ASAL berikut TANPA MENGUBAH STRUKTUR UTAMA.
-                    Isi bahagian dalam tanda kurung siku [...] berdasarkan analisis visual Image 1 & Image 2.
+                    img_m_pil = Image.open(uploaded_model_gen)
+                    img_p_pil = Image.open(uploaded_product_botol)
 
-                    FORMAT OUTPUT (WAJIB PATUHI STRUKTUR ASAL KETAT INI):
+                    sys_prompt_f2 = """
+                    Analisis Image 1 (Model) dan Image 2 (Botol Produk NOBAU).
+                    Tugasmu adalah meriset visualnya lalu menghasilkan Master Video Prompt UGC 10 detik sesuai format baku berikut.
+                    Isi detail SETTING, OUTFIT, VARIANT LABEL PRODUK, DYNAMIC HOOK (0-3s), ACTION (3-6s), PAYOFF (6-8s), CTA (8-10s), dan DIALOGUE Bahasa Indonesia secara OTOMATIS & RELEVAN berdasarkan produk & latar di Image 1 & Image 2!
+
+                    FORMAT OUTPUT (WAJIB DIIKUTI):
                     A continuous 10-second vertical 9:16 smartphone UGC video recorded inside [Deskripsikan lokasi/latar dari Image 1 secara presisi], matching the exact setting of Image 1.
 
                     IDENTITY: Preserve exact facial structure, identity, hair style, skin tone, [Deskripsikan outfit dan aksesori dari Image 1 secara presisi], and natural makeup matching Image 1.
@@ -143,8 +192,9 @@ with tab2:
 
                     CONTINUITY: One continuous generation, no camera cuts, fully clothed, no face morphing, no product redesign, no trigger spray mechanism, no floating limbs, no text or graphics.
                     """
-                    prompt_out = call_gemini_robust(client, sys_f2, [Image.open(up_model), Image.open(up_prod)])
+
+                    prompt_vid = generate_content_safe(client, sys_prompt_f2, [img_m_pil, img_p_pil])
                     st.success("🚀 Master Video Prompt Flow AI Generated!")
-                    st.text_area("Copy-Paste Prompt Ini ke Flow AI:", value=prompt_out, height=380)
+                    st.text_area("Copy-Paste Prompt Ini ke Flow AI:", value=prompt_vid, height=380)
                 except Exception as e:
                     st.error(f"Gagal memanggil Gemini API: {e}")
