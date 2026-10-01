@@ -12,7 +12,6 @@ st.set_page_config(
 st.title("🧪 NOBAU AI Content Brain & Prompt Studio")
 st.caption("Automation Studio for Scale 1.000 Affiliate UGC Videos")
 
-# Inisialisasi Client Gemini dari Secrets Streamlit Cloud
 client = None
 if "GEMINI_API_KEY" in st.secrets:
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
@@ -22,7 +21,6 @@ tab1, tab2 = st.tabs([
     "🚀 FITUR 2: Content Brain V3 Video Prompt (Flow AI)"
 ])
 
-# Fungsi pintar pemanggilan Gemini dengan Auto-Retry & Fallback Model
 def generate_content_safe(client, prompt, images):
     models_to_try = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
     
@@ -41,13 +39,15 @@ def generate_content_safe(client, prompt, images):
                 if "503" in err_str or "UNAVAILABLE" in err_str:
                     time.sleep(1.5)
                     continue
+                elif "404" in err_str or "NOT_FOUND" in err_str:
+                    break
                 else:
                     break
                     
     raise last_exception
 
 # =========================================================
-# FITUR 1: MASTER PROMPT IMAGE GENERATOR (GEMINI VISION DYNAMIC)
+# FITUR 1: MASTER PROMPT IMAGE GENERATOR
 # =========================================================
 with tab1:
     st.header("📌 Fitur 1: Generate Master Image Prompt")
@@ -123,7 +123,7 @@ with tab1:
                     st.error(f"Gagal memanggil Gemini API: {e}")
 
 # =========================================================
-# FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR (GEMINI VISION DYNAMIC)
+# FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR
 # =========================================================
 with tab2:
     st.header("🚀 Fitur 2: Content Brain V3 & Video Prompt Generator")
