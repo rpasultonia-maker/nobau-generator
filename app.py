@@ -24,12 +24,10 @@ tab1, tab2 = st.tabs([
 
 # Fungsi pintar pemanggilan Gemini dengan Auto-Retry & Fallback Model
 def generate_content_safe(client, prompt, images):
-    # Urutan model yang dicoba jika server sedang high demand (503)
     models_to_try = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
     
     last_exception = None
     for model_name in models_to_try:
-        # Coba hingga 3 kali retry per model jika kena 503
         for attempt in range(3):
             try:
                 response = client.models.generate_content(
@@ -40,12 +38,11 @@ def generate_content_safe(client, prompt, images):
             except Exception as e:
                 last_exception = e
                 err_str = str(e)
-                # Jika error 503 (high demand), tunggu 1.5 detik lalu coba lagi
                 if "503" in err_str or "UNAVAILABLE" in err_str:
                     time.sleep(1.5)
                     continue
                 else:
-                    break # Jika error lain (bukan 503), coba model berikutnya
+                    break
                     
     raise last_exception
 
@@ -103,7 +100,7 @@ with tab1:
                     Use Image 1 strictly for composition, camera perspective, body pose, clothing style, background environment, lighting, and casual smartphone photography aesthetic.
 
                     FACE IDENTITY — CRITICAL:
-                    The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve facial structure, eyes, nose, lips, jawline, skin tone. Do NOT blend faces.
+                    The woman's face and identity must come strictly from Image 2. Replace the face in Image 1 with Image 2's exact identity. Preserve exact facial structure, eyes, nose, lips, jawline, skin tone, and specific facial proportions extracted from Image 2 [Sebutkan secara ringkas detail fisik wajah Image 2 di sini]. Do NOT blend faces.
 
                     SUBJECT: A young Indonesian woman taking a casual smartphone selfie.
                     POSE: [Deskripsikan pose tangan, posisi tubuh, dan gesture dari Image 1 secara presisi]
