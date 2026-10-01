@@ -20,26 +20,25 @@ tab1, tab2 = st.tabs([
     "🚀 FITUR 2: Content Brain V3 Video Prompt (Flow AI)"
 ])
 
-# Fungsi helper untuk memanggil Gemini AI dengan fallback model jika 404
-def generate_with_gemini(prompt, images):
-    # Coba model-model yang valid secara berurutan
-    models_to_try = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash']
-    last_error = None
+# Fungsi Helper untuk pemanggilan Model Gemini yang Valid
+def call_gemini_vision(prompt, images):
+    # Urutan model resmi terbaru
+    available_models = ['gemini-2.5-flash', 'gemini-1.5-flash']
+    last_err = None
     
-    for model_name in models_to_try:
+    for m_name in available_models:
         try:
-            model = genai.GenerativeModel(model_name)
-            contents = [prompt] + images
-            response = model.generate_content(contents)
+            model = genai.GenerativeModel(m_name)
+            response = model.generate_content([prompt] + images)
             return response.text
         except Exception as e:
-            last_error = e
+            last_err = e
             continue
             
-    raise last_error
+    raise last_err
 
 # =========================================================
-# FITUR 1: MASTER PROMPT IMAGE GENERATOR (GEMINI VISION DYNAMIC)
+# FITUR 1: MASTER PROMPT IMAGE GENERATOR (VISION DYNAMIC)
 # =========================================================
 with tab1:
     st.header("📌 Fitur 1: Generate Master Image Prompt")
@@ -106,11 +105,11 @@ with tab1:
                     FINAL IMAGE: Believable smartphone selfie of the NOBAU female model in Image 1's exact visual situation.
                     """
 
-                    prompt_img = generate_with_gemini(sys_prompt_f1, [img1_pil, img2_pil])
+                    prompt_img = call_gemini_vision(sys_prompt_f1, [img1_pil, img2_pil])
                     st.success("✨ Master Image Prompt Generated!")
                     st.text_area("Copy-Paste Prompt Ini ke Midjourney / Flux:", value=prompt_img, height=380)
                 except Exception as e:
-                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah dipasang dengan benar di Streamlit Secrets.")
+                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah terpasang di Secrets.")
 
 # =========================================================
 # FITUR 2: CONTENT BRAIN V3 VIDEO PROMPT GENERATOR (GEMINI VISION DYNAMIC)
@@ -178,8 +177,8 @@ with tab2:
                     CONTINUITY: One continuous generation, no camera cuts, fully clothed, no face morphing, no product redesign, no trigger spray mechanism, no floating limbs, no text or graphics.
                     """
 
-                    prompt_vid = generate_with_gemini(sys_prompt_f2, [img_m_pil, img_p_pil])
+                    prompt_vid = call_gemini_vision(sys_prompt_f2, [img_m_pil, img_p_pil])
                     st.success("🚀 Master Video Prompt Flow AI Generated!")
                     st.text_area("Copy-Paste Prompt Ini ke Flow AI:", value=prompt_vid, height=380)
                 except Exception as e:
-                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah dipasang dengan benar di Streamlit Secrets.")
+                    st.error(f"Gagal memanggil Gemini API: {e}. Pastikan GEMINI_API_KEY sudah terpasang di Secrets.")
